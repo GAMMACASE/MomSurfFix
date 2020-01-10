@@ -1,0 +1,148 @@
+"Games"
+{
+	"csgo"
+	{
+		"Keys"
+		{
+			//patch1 jmp addresses
+			"win_jmp_instruction_1"		"212"
+			"win_jmp_instruction_2"		"556"
+			"win_jmp_instruction_4"		"578"
+			"win_jmp_instruction_5"		"1262"
+			"win_jmp_instruction_8"		"1442"
+			"win_jmp_instruction_11"	"1758"
+			"win_jmp_instruction_12"	"2091"
+			"win_jmp_instruction_13"	"1564"
+			
+			//patch2 jmp addresses
+			"win_jmp_instruction_3"		"895"
+			"win_jmp_instruction_6"		"1451"
+			"win_jmp_instruction_7"		"1724"
+			"win_jmp_instruction_9"		"1834"
+			"win_jmp_instruction_10"	"2039"
+			
+			//break
+			"win_jmp_instruction_break"	"212"
+		}
+		
+		"Addresses"
+		{
+			"TryPlayerMove_Start"
+			{
+				"windows"
+                {
+                    "signature" "CGameMovement::TryPlayerMove"        
+                }
+				
+				"linux"
+				{
+					"signature" "CGameMovement::TryPlayerMove"  
+				}
+				
+				"offset" "0"
+			}
+			
+			//Not sure I even need this one
+			"TryPlayerMove_End"
+			{
+				"windows"
+                {
+                    "signature" "CGameMovement::TryPlayerMove_EstimatedEnd"        
+					"offset" "11"
+				}
+			}
+			
+			"FirstPatch"
+			{
+				"windows"
+                {
+                    "signature" "CGameMovement::TryPlayerMove"        
+					"offset" "1836"
+				}
+			}
+			
+			"SecondPatch"
+			{
+				"windows"
+                {
+                    "signature" "CGameMovement::TryPlayerMove"
+					"offset" "2044"					
+                }
+			}
+			
+			"ReallocationStart"
+			{
+				"windows"
+                {
+                    "signature" "CGameMovement::TryPlayerMove"
+					"offset" "1457"					
+                }
+			}
+			
+			"ModuleStart"
+			{
+				"windows"
+				{
+					"signature" "BinaryHeader"
+					"offset" "0"
+				}
+			}
+		}
+		
+		"Signatures"
+		{
+			"CGameMovement::TryPlayerMove"
+			{
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x83\xE4\xF8\x81\xEC\x38\x01\x00\x00\xF3\x0F\x10\x35\x2A\x2A\x2A\x2A"
+			}
+			
+			"CGameMovement::TryPlayerMove_EstimatedEnd"
+			{
+				"library"		"server"
+				"windows"		"\xB8\x04\x00\x00\x00\x8B\xE5"
+			}
+			
+			"BinaryHeader"
+			{
+				"library"		"server"
+				"windows"		"\x4D\x5A\x90\x00"
+			}
+		}
+		
+		"Offsets"
+		{
+			//Can nop a lot more due to redundant check before but don't see the actual need in this.
+			"FirstPatchSize"
+			{
+				"windows"		"42"
+			}
+			
+			"SecondPatchSizePt1"
+			{
+				"windows"		"8"
+			}
+			
+			"SecondPatchSizeSkip"
+			{
+				"windows"		"8"
+			}
+			
+			"SecondPatchSizePt2"
+			{
+				"windows"		"31"
+			}
+			
+			"ModuleSizeOffset"
+			{
+				"windows"		"392"
+			}
+			
+			"WinOrLin"
+			{
+				"windows"		"1"
+				"linux"			"2"
+			}
+		}
+	}
+}
