@@ -1,0 +1,219 @@
+"Games"
+{
+	"csgo"
+	{
+		"Keys"
+		{
+			//CGameMovement
+			"CGameMovement::player"				"4"
+			"CGameMovement::mv"					"8"
+			//...
+			"CGameMovement::m_pTraceListData"	"3660"
+			"CGameMovement::m_nTraceCount"		"3664"
+			
+			//CMoveData		
+			"CMoveData::m_vecVelocity"			"64"
+			//...
+			"CMoveData::m_vecAbsOrigin"			"172"
+			
+			//cplane_t		
+			"cplane_t::normal"					"0"
+			"cplane_t::dist"					"12"
+			"cplane_t::type"					"16"
+			"cplane_t::signbits"				"17"
+			
+			//csurface_t		
+			"csurface_t::name"					"0"
+			"csurface_t::surfaceProps"			"4"
+			"csurface_t::flags"					"6"
+			
+			//CGameTrace		
+			"CGameTrace::startpos"				"0"
+			"CGameTrace::endpos"				"12"
+			"CGameTrace::plane"					"24"
+			"CGameTrace::fraction"				"44"
+			"CGameTrace::contents"				"48"
+			"CGameTrace::dispFlags"				"52"
+			"CGameTrace::allsolid"				"54"
+			"CGameTrace::startsolid"			"55"
+			"CGameTrace::fractionleftsolid"		"56"
+			"CGameTrace::surface"				"60"
+			"CGameTrace::hitgroup"				"68"
+			"CGameTrace::physicsbone"			"72"
+			"CGameTrace::m_pEnt"				"74"
+			"CGameTrace::hitbox"				"80"
+			"CGameTrace::size"					"84"
+		
+			//CBasePlayer
+			"CBasePlayer::m_surfaceFriction"	"4660"
+			
+			//Ray_t
+			"Ray_t::m_Start"					"0"
+			"Ray_t::m_Delta"					"16"
+			"Ray_t::m_StartOffset"				"32"
+			"Ray_t::m_Extents"					"48"
+			"Ray_t::m_pWorldAxisTransform"		"64"
+			"Ray_t::m_IsRay"					"68"
+			"Ray_t::m_IsSwept"					"69"
+			"Ray_t::size"						"70"
+			
+			//CTraceFilterSimple
+			"CTraceFilterSimple::m_pPassEnt"						"4"
+			"CTraceFilterSimple::m_collisionGroup"					"8"
+			"CTraceFilterSimple::m_pExtraShouldHitCheckFunction"	"12"
+			"CTraceFilterSimple::size"								"16"
+		}
+		
+		"Addresses"
+		{
+			"TryPlayerMove"
+			{
+				"windows"
+                {
+                    "signature" "CGameMovement::TryPlayerMove"        
+                }
+				
+				"linux"
+				{
+					"signature" "CGameMovement::TryPlayerMove"  
+				}
+				
+				"offset" "0"
+			}
+			
+			"g_pMemAlloc"
+			{
+				"windows"
+				{
+					"signature" "g_pMemAllocFunc"
+				}
+				
+				"read"	"20"
+				"read"	"0"
+				"read"	"0"
+			}
+			
+			"enginetrace"
+			{
+				"windows"
+				{
+					"signature"	"CGameMovement::TracePlayerBBox"
+					"read"	"111"
+				}
+				"read" "0"
+			}
+			
+			"sm_pSingleton"
+			{
+				"windows"
+				{
+					"signature"	"CGameMovement::TryPlayerMove"
+					"read"	"700"
+				}
+				"read" "0"
+			}
+		}
+		
+		"Signatures"
+		{
+			"CGameMovement::TracePlayerBBox"
+			{
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x83\xE4\xF0\x83\xEC\x5C"
+			}
+			
+			"CGameMovement::TryPlayerMove"
+			{
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x83\xE4\xF8\x81\xEC\x38\x01\x00\x00\xF3\x0F\x10\x35\x2A\x2A\x2A\x2A"
+			}
+			
+			"g_pMemAllocFunc"
+			{
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x56\x8B\xF1\x83\x4E\x30\x04"
+			}
+			
+			"malloc"
+			{
+				"library"		"engine"
+				"linux"			"\x55\x89\xE5\x5D\xE9\x2A\x2A\x2A\x2A\x8D\xB4\x26\x2A\x2A\x2A\x2A\x55\xA1\x2A\x2A\x2A\x2A"
+			}
+			
+			"free"
+			{
+				"library"		"engine"
+				"linux"			"\x55\x89\xE5\x5D\xE9\x2A\x2A\x2A\x2A\x8D\xB4\x26\x00\x00\x00\x00\x55\x89\xE5\x5D\xE9\x2A\x2A\x2A\x2A\x8D\xB4\x26\x00\x00\x00\x00\x55\xA1\x2A\x2A\x2A\x2A"
+			}
+		}
+		
+		"Offsets"
+		{
+			"AddToTouched"
+			{
+				"windows"		"3"
+			}
+			
+			"CanTraceRay"
+			{
+				"windows"		"3"
+			}
+			
+			"TraceRay"
+			{
+				"windows"		"5"
+			}
+			
+			"TraceRayAgainstLeafAndEntityList"
+			{
+				"windows"		"8"
+			}
+			
+			"UnlockTraceFilter"
+			{
+				"windows"		"74"
+			}
+			
+			"LockTraceFilter"
+			{
+				"windows"		"73"
+			}
+			
+			"ClipVelocity"
+			{
+				"windows"		"49"
+			}
+			
+			"TracePlayerBBox"
+			{
+				"windows"		"15"
+			}
+			
+			"GetPlayerMaxs"
+			{
+				"windows"		"14"
+			}
+			
+			"GetPlayerMins"
+			{
+				"windows"		"13"
+			}
+			
+			"Malloc"
+			{
+				"windows"		"1"
+			}
+			
+			"Free"
+			{
+				"windows"		"5"
+			}
+			
+			"OSType"
+			{
+				"windows"		"1"
+				"linux"			"2"
+			}
+		}
+	}
+}
