@@ -105,32 +105,29 @@ stock void InitUtils(GameData gd)
 {
 	gMemoryPool = new ArrayList(sizeof(MemoryPoolEntry));
 	
-	if(gOSType == OSWindows)
-	{
-		g_pMemAlloc = gd.GetAddress("g_pMemAlloc");
-		ASSERT(g_pMemAlloc != Address_Null);
-		
-		//Malloc
-		StartPrepSDKCall(SDKCall_Raw);
-		
-		PrepSDKCall_SetVirtual(gd.GetOffset("Malloc"));
-		
-		PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
-		PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
-		
-		gMalloc = EndPrepSDKCall();
-		ASSERT(gMalloc);
-		
-		//Free
-		StartPrepSDKCall(SDKCall_Raw);
-		
-		PrepSDKCall_SetVirtual(gd.GetOffset("Free"));
-		
-		PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
-		
-		gFree = EndPrepSDKCall();
-		ASSERT(gFree);
-	}
+	g_pMemAlloc = gd.GetAddress("g_pMemAlloc");
+	ASSERT(g_pMemAlloc != Address_Null);
+	
+	//Malloc
+	StartPrepSDKCall(SDKCall_Raw);
+	
+	PrepSDKCall_SetVirtual(gd.GetOffset("Malloc"));
+	
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
+	
+	gMalloc = EndPrepSDKCall();
+	ASSERT(gMalloc);
+	
+	//Free
+	StartPrepSDKCall(SDKCall_Raw);
+	
+	PrepSDKCall_SetVirtual(gd.GetOffset("Free"));
+	
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+	
+	gFree = EndPrepSDKCall();
+	ASSERT(gFree);
 }
 
 stock Address Malloc(int size, const char[] name)
@@ -141,10 +138,7 @@ stock Address Malloc(int size, const char[] name)
 	MemoryPoolEntry entry;
 	strcopy(entry.name, sizeof(MemoryPoolEntry::name), name);
 	
-	if(gOSType == OSWindows)
-	{
-		entry.addr = SDKCall(gMalloc, g_pMemAlloc, size);
-	}
+	entry.addr = SDKCall(gMalloc, g_pMemAlloc, size);
 	
 	ASSERT_FMT(entry.addr != Address_Null, "Failed to allocate memory (size: %i)!", size);
 	gMemoryPool.PushArray(entry);
@@ -164,10 +158,7 @@ stock void Free(Address addr)
 	
 	gMemoryPool.Erase(idx);
 	
-	if(gOSType == OSWindows)
-	{
-		SDKCall(gFree, g_pMemAlloc, addr);
-	}
+	SDKCall(gFree, g_pMemAlloc, addr);
 }
 
 stock void CleanUpUtils()

@@ -91,7 +91,6 @@ public Action SM_Dumpmempool(int client, int args)
 
 /*public Action SM_TestMem(int client, int args)
 {
-	
 	return Plugin_Handled;
 }*/
 
