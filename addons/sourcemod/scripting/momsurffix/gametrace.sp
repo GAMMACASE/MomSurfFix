@@ -240,7 +240,7 @@ methodmap Ray_t < AllocatableBase
 	
 	public void Init(float start[3], float end[3], float mins[3], float maxs[3])
 	{
-		float buff[3];
+		float buff[3], buff2[3];
 		SubtractVectors(end, start, buff);
 		this.m_Delta.FromArray(buff);
 		
@@ -255,8 +255,9 @@ methodmap Ray_t < AllocatableBase
 		
 		AddVectors(mins, maxs, buff);
 		ScaleVector(buff, 0.5);
-		AddVectors(start, buff, buff);
-		ScaleVector(buff, -1.0);
+		AddVectors(start, buff, buff2);
+		this.m_Start.FromArray(buff2);
+		NegateVector(buff);
 		this.m_StartOffset.FromArray(buff);
 	}
 }

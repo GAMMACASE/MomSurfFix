@@ -4,12 +4,13 @@
 #include "dhooks"
 
 #define SNAME "[momsurffix2] "
+#define GAME_DATA_FILE "momsurffix2.games"
 
 public Plugin myinfo = {
     name = "Momentum surf fix \'2",
     author = "GAMMA CASE",
     description = "Ported surf fix from momentum mod.",
-    version = "1.0.0",
+    version = "1.0.1",
     url = "http://steamcommunity.com/id/_GAMMACASE_/"
 };
 
@@ -36,6 +37,7 @@ OSType gOSType;
 ConVar gRampBumpCount, gBounce, gRampInitialRetraceLength;
 
 float vec3_origin[3] = {0.0, 0.0, 0.0};
+bool gLoadedTooEarly;
 
 public void OnPluginStart()
 {
@@ -49,19 +51,30 @@ public void OnPluginStart()
 	
 	AutoExecConfig();
 	
-	GameData gd = new GameData("momsurffix2.games");
+	GameData gd = new GameData(GAME_DATA_FILE);
 	ASSERT_FINAL(gd);
 	
 	ValidateGameData(gd);
 	
 	InitUtils(gd);
 	InitGameTrace(gd);
-	InitBasePlayer(gd);
+	gLoadedTooEarly = !InitBasePlayer(gd);
 	InitGameMovement(gd);
 	
 	SetupDhooks(gd);
 	
 	delete gd;
+}
+
+public void OnMapStart()
+{
+	if(gLoadedTooEarly)
+	{
+		GameData gd = new GameData(GAME_DATA_FILE);
+		LateInitBasePlayer(gd);
+		gLoadedTooEarly = false;
+		delete gd;
+	}
 }
 
 public void OnPluginEnd()
@@ -135,6 +148,8 @@ int TryPlayerMove(CGameMovement pThis, Vector pFirstDest, CGameTrace pFirstTrace
 		
 		if(stuck_on_ramp)
 		{
+			//PrintToServer(SNAME..."[%i] Stuck!!!", GetGameTickCount());
+			
 			if(!has_valid_plane)
 			{
 				plane_normal = pm.plane.normal;
@@ -268,10 +283,12 @@ int TryPlayerMove(CGameMovement pThis, Vector pFirstDest, CGameTrace pFirstTrace
 			if(stuck_on_ramp && has_valid_plane)
 			{
 				alloced_vector.FromArray(fixed_origin);
+				//TracePlayerBBoxCustom(pThis, fixed_origin, end, MASK_PLAYERSOLID, COLLISION_GROUP_PLAYER_MOVEMENT, pm);
 				TracePlayerBBox(pThis, alloced_vector, vec1, MASK_PLAYERSOLID, COLLISION_GROUP_PLAYER_MOVEMENT, pm);
 				pm.plane.normal.FromArray(valid_plane);
 			}
 			else
+				//TracePlayerBBoxCustom(pThis, VectorToArray(pThis.mv.m_vecAbsOrigin), end, MASK_PLAYERSOLID, COLLISION_GROUP_PLAYER_MOVEMENT, pm);
 				TracePlayerBBox(pThis, pThis.mv.m_vecAbsOrigin, vec1, MASK_PLAYERSOLID, COLLISION_GROUP_PLAYER_MOVEMENT, pm);
 			
 			vec1.Free();
@@ -284,19 +301,20 @@ int TryPlayerMove(CGameMovement pThis, Vector pFirstDest, CGameTrace pFirstTrace
 			continue;
 		}
 		
-		if(pm.allsolid)
+		/*if(pm.allsolid)
 		{
 			vecVelocity.FromArray(vec3_origin);
 			
 			pm.Free();
 			return 4;
-		}
+		}*/
 		
 		if(pm.fraction > 0.0)
 		{
 			if((bumpcount == 0 || pThis.player.m_hGroundEntity != view_as<Address>(-1)) && numbumps > 0 && pm.fraction == 1.0)
 			{
 				CGameTrace stuck = CGameTrace();
+				//TracePlayerBBoxCustom(pThis, VectorToArray(pm.endpos), VectorToArray(pm.endpos), MASK_PLAYERSOLID, COLLISION_GROUP_PLAYER_MOVEMENT, stuck);
 				TracePlayerBBox(pThis, pm.endpos, pm.endpos, MASK_PLAYERSOLID, COLLISION_GROUP_PLAYER_MOVEMENT, stuck);
 				
 				if((stuck.startsolid || stuck.fraction != 1.0) && bumpcount == 0)
@@ -528,7 +546,7 @@ stock bool IsValidMovementTrace(CGameMovement pThis, CGameTrace tr)
 	return true;
 }
 
-/*stock void TracePlayerBBox(CGameMovement pThis, float start[3], float end[3], int mask, int collisionGroup, CGameTrace trace)
+/*stock void TracePlayerBBoxCustom(CGameMovement pThis, float start[3], float end[3], int mask, int collisionGroup, CGameTrace trace)
 {
 	Ray_t ray = Ray_t();
 	

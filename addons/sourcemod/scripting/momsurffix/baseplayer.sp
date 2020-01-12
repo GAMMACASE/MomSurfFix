@@ -37,7 +37,7 @@ methodmap CBasePlayer < AddressBase
 	}
 }
 
-stock void InitBasePlayer(GameData gd)
+stock bool InitBasePlayer(GameData gd)
 {
 	char buff[128];
 	
@@ -47,6 +47,21 @@ stock void InitBasePlayer(GameData gd)
 	
 	offsets.cbpoffsets.m_hGroundEntity = FindSendPropInfo("CBasePlayer", "m_hGroundEntity");
 	ASSERT_FMT(offsets.cbpoffsets.m_hGroundEntity > 0, "Can't get \"CBasePlayer::m_hGroundEntity\" offset from FindSendPropInfo().");
+	
+	if(IsValidEntity(0))
+	{
+		offsets.cbpoffsets.m_MoveType = FindDataMapInfo(0, "m_MoveType");
+		ASSERT_FMT(offsets.cbpoffsets.m_MoveType != -1, "Can't get \"CBasePlayer::m_MoveType\" offset from FindDataMapInfo().");
+	}
+	else
+		return false;
+	
+	return true;
+}
+
+stock void LateInitBasePlayer(GameData gd)
+{
+	ASSERT(IsValidEntity(0));
 	offsets.cbpoffsets.m_MoveType = FindDataMapInfo(0, "m_MoveType");
 	ASSERT_FMT(offsets.cbpoffsets.m_MoveType != -1, "Can't get \"CBasePlayer::m_MoveType\" offset from FindDataMapInfo().");
 }
