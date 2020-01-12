@@ -66,30 +66,20 @@
 		
 		"Addresses"
 		{
-			"TryPlayerMove"
-			{
-				"windows"
-                {
-                    "signature" "CGameMovement::TryPlayerMove"        
-                }
-				
-				"linux"
-				{
-					"signature" "CGameMovement::TryPlayerMove"  
-				}
-				
-				"offset" "0"
-			}
-			
 			"g_pMemAlloc"
 			{
 				"windows"
 				{
 					"signature" "g_pMemAllocFunc"
+					"read"	"20"
+					"read"	"0"
+				}
+				"linux"
+				{
+					"signature" "g_pMemAllocFunc"
+					"read"	"142"
 				}
 				
-				"read"	"20"
-				"read"	"0"
 				"read"	"0"
 			}
 			
@@ -100,6 +90,12 @@
 					"signature"	"CGameMovement::TracePlayerBBox"
 					"read"	"111"
 				}
+				"linux"
+				{
+					"signature"	"CGameMovement::TracePlayerBBox"
+					"read"	"465"
+				}
+				
 				"read" "0"
 			}
 			
@@ -110,6 +106,12 @@
 					"signature"	"CGameMovement::TryPlayerMove"
 					"read"	"700"
 				}
+				"linux"
+				{
+					"signature"	"CGameMovement::TryPlayerMove"
+					"read"	"596"
+				}
+				
 				"read" "0"
 			}
 		}
@@ -120,30 +122,21 @@
 			{
 				"library"		"server"
 				"windows"		"\x55\x8B\xEC\x83\xE4\xF0\x83\xEC\x5C"
+				"linux"			"\x55\x89\xE5\x57\x56\x53\x81\xEC\x8C\x00\x00\x00\x8B\x5D\x08\x8B\x7D\x10"
 			}
 			
 			"CGameMovement::TryPlayerMove"
 			{
 				"library"		"server"
 				"windows"		"\x55\x8B\xEC\x83\xE4\xF8\x81\xEC\x38\x01\x00\x00\xF3\x0F\x10\x35\x2A\x2A\x2A\x2A"
+				"linux"			"\x55\x89\xE5\x57\x56\x53\x81\xEC\xAC\x01\x00\x00\xC7\x85\x20\xFF\xFF\xFF\x00\x00\x00\x00"
 			}
 			
 			"g_pMemAllocFunc"
 			{
 				"library"		"server"
 				"windows"		"\x55\x8B\xEC\x56\x8B\xF1\x83\x4E\x30\x04"
-			}
-			
-			"malloc"
-			{
-				"library"		"engine"
-				"linux"			"\x55\x89\xE5\x5D\xE9\x2A\x2A\x2A\x2A\x8D\xB4\x26\x2A\x2A\x2A\x2A\x55\xA1\x2A\x2A\x2A\x2A"
-			}
-			
-			"free"
-			{
-				"library"		"engine"
-				"linux"			"\x55\x89\xE5\x5D\xE9\x2A\x2A\x2A\x2A\x8D\xB4\x26\x00\x00\x00\x00\x55\x89\xE5\x5D\xE9\x2A\x2A\x2A\x2A\x8D\xB4\x26\x00\x00\x00\x00\x55\xA1\x2A\x2A\x2A\x2A"
+				"linux"			"\x55\x89\xE5\x57\x56\x53\x81\xEC\x6C\x03\x00\x00\x8B\x55\x08"
 			}
 		}
 		
@@ -152,61 +145,73 @@
 			"AddToTouched"
 			{
 				"windows"		"3"
+				"linux"			"3"
 			}
 			
 			"CanTraceRay"
 			{
 				"windows"		"3"
+				"linux"			"4"
 			}
 			
 			"TraceRay"
 			{
 				"windows"		"5"
+				"linux"			"5"
 			}
 			
 			"TraceRayAgainstLeafAndEntityList"
 			{
 				"windows"		"8"
+				"linux"			"8"
 			}
 			
 			"UnlockTraceFilter"
 			{
 				"windows"		"74"
+				"linux"			"75"
 			}
 			
 			"LockTraceFilter"
 			{
 				"windows"		"73"
+				"linux"			"74"
 			}
 			
 			"ClipVelocity"
 			{
 				"windows"		"49"
+				"linux"			"50"
 			}
 			
 			"TracePlayerBBox"
 			{
 				"windows"		"15"
+				"linux"			"14"
 			}
 			
 			"GetPlayerMaxs"
 			{
 				"windows"		"14"
+				"linux"			"35"
 			}
 			
 			"GetPlayerMins"
 			{
 				"windows"		"13"
+				"linux"			"34"
 			}
 			
 			"Malloc"
 			{
 				"windows"		"1"
+				"linux"			"0"
 			}
 			
 			"Free"
 			{
 				"windows"		"5"
+				"linux"			"2"
 			}
 			
 			"OSType"
