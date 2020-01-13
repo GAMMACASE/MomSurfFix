@@ -10,7 +10,7 @@ public Plugin myinfo = {
     name = "Momentum surf fix \'2",
     author = "GAMMA CASE",
     description = "Ported surf fix from momentum mod.",
-    version = "1.0.2",
+    version = "1.0.3",
     url = "http://steamcommunity.com/id/_GAMMACASE_/"
 };
 
@@ -142,7 +142,8 @@ int TryPlayerMove(CGameMovement pThis, Vector pFirstDest, CGameTrace pFirstTrace
 	
 	for(bumpcount = 0; bumpcount < numbumps; bumpcount++)
 	{
-		if(vecVelocity.LengthSqr() == 0.0)
+		//TODO: should be replaced with normal solution!! Currently hack to fix issue #1.
+		if(vecVelocity.LengthSqr() == 0.0 || (vecVelocity.x == 0.0 && vecVelocity.y == 0.0 && vecVelocity.z == -6.25))
 			break;
 		
 		if(stuck_on_ramp)
