@@ -5,12 +5,13 @@
 
 #define SNAME "[momsurffix2] "
 #define GAME_DATA_FILE "momsurffix2.games"
+//#define DEBUG_PROFILE
 
 public Plugin myinfo = {
     name = "Momentum surf fix \'2",
     author = "GAMMA CASE",
     description = "Ported surf fix from momentum mod.",
-    version = "1.0.3",
+    version = "1.0.4",
     url = "http://steamcommunity.com/id/_GAMMACASE_/"
 };
 
@@ -19,30 +20,51 @@ public Plugin myinfo = {
 
 enum OSType
 {
-	OSUnknown = 0,
+	OSUnknown = -1,
 	OSWindows = 1,
 	OSLinux = 2
 };
 
 OSType gOSType;
+EngineVersion gEngineVersion;
 
 #define CUSTOM_ASSERTION_FAILSTATE
 #define FAILSTATE_FUNC SetFailStateCustom
 #include "glib/memutils"
 #include "momsurffix/utils.sp"
-#include "momsurffix/gametrace.sp"
 #include "momsurffix/baseplayer.sp"
+#include "momsurffix/gametrace.sp"
 #include "momsurffix/gamemovement.sp"
 
 ConVar gRampBumpCount, gBounce, gRampInitialRetraceLength;
 
 float vec3_origin[3] = {0.0, 0.0, 0.0};
-bool gLoadedTooEarly;
+bool gBasePlayerLoadedTooEarly;
+
+#if defined DEBUG_PROFILE
+#include "profiler"
+#define PROF_START if(gProf) gProf.Start()
+#define PROF_STOP%1; if(gProf)\
+{\
+	gProf.Stop();\
+	Prof_Check();\
+}
+
+Profiler gProf;
+float gTotal;
+int gTotalCount, gTotalCountNeeded;
+#else
+#define PROF_START%1;
+#define PROF_STOP%1;
+#endif
 
 public void OnPluginStart()
 {
 	//RegAdminCmd("sm_testmem", SM_TestMem, ADMFLAG_ROOT);
 	RegAdminCmd("sm_mom_dumpmempool", SM_Dumpmempool, ADMFLAG_ROOT, "Dumps active momory pool. Mainly for debugging.");
+#if defined DEBUG_PROFILE
+	RegAdminCmd("sm_mom_prof", SM_Prof, ADMFLAG_ROOT, "Profiles performance of some expensive parts. Mainly for debugging.");
+#endif
 	
 	gRampBumpCount = CreateConVar("momsuffix_ramp_bumpcount", "8", "Helps with fixing surf/ramp bugs", .hasMin = true, .min = 4.0, .hasMax = true, .max = 16.0);
 	gRampInitialRetraceLength = CreateConVar("momsuffix_ramp_initial_retrace_length", "0.2", "Amount of units used in offset for retraces", .hasMin = true, .min = 0.2, .hasMax = true, .max = 5.0);
@@ -54,11 +76,11 @@ public void OnPluginStart()
 	GameData gd = new GameData(GAME_DATA_FILE);
 	ASSERT_FINAL(gd);
 	
-	ValidateGameData(gd);
+	ValidateGameAndOS(gd);
 	
 	InitUtils(gd);
 	InitGameTrace(gd);
-	gLoadedTooEarly = !InitBasePlayer(gd);
+	gBasePlayerLoadedTooEarly = InitBasePlayer(gd);
 	InitGameMovement(gd);
 	
 	SetupDhooks(gd);
@@ -68,11 +90,11 @@ public void OnPluginStart()
 
 public void OnMapStart()
 {
-	if(gLoadedTooEarly)
+	if(gBasePlayerLoadedTooEarly)
 	{
 		GameData gd = new GameData(GAME_DATA_FILE);
 		LateInitBasePlayer(gd);
-		gLoadedTooEarly = false;
+		gBasePlayerLoadedTooEarly = false;
 		delete gd;
 	}
 }
@@ -89,15 +111,58 @@ public Action SM_Dumpmempool(int client, int args)
 	return Plugin_Handled;
 }
 
+#if defined DEBUG_PROFILE
+public Action SM_Prof(int client, int args)
+{
+	if(args < 1)
+	{
+		ReplyToCommand(client, SNAME..."Usage: sm_prof <count>");
+		return Plugin_Handled;
+	}
+	
+	char buff[32];
+	GetCmdArg(1, buff, sizeof(buff));
+	gTotalCountNeeded = StringToInt(buff);
+	
+	if(gTotalCountNeeded <= 0)
+	{
+		ReplyToCommand(client, SNAME..."Only positive values allowed.")
+		return Plugin_Handled;
+	}
+	
+	gProf = new Profiler();
+	
+	ReplyToCommand(client, SNAME..."Profiler started, awaiting %i iterations.", gTotalCountNeeded);
+	
+	return Plugin_Handled;
+}
+
+stock void Prof_Check()
+{
+	gTotal += gProf.Time;
+	gTotalCount++;
+	
+	if(gTotalCount >= gTotalCountNeeded)
+	{
+		PrintToServer(SNAME..."Prifiling completed, avg time: %f", gTotal / float(gTotalCount));
+		
+		delete gProf;
+	}
+}
+#endif
+
 /*public Action SM_TestMem(int client, int args)
 {
 	return Plugin_Handled;
 }*/
 
-void ValidateGameData(GameData gd)
+void ValidateGameAndOS(GameData gd)
 {
 	gOSType = view_as<OSType>(gd.GetOffset("OSType"));
-	ASSERT_MSG(gOSType != OSUnknown, "Failed to get OS type.");
+	ASSERT_FINAL_MSG(gOSType != OSUnknown, "Failed to get OS type or you are trying to load it on unsupported OS!");
+	
+	gEngineVersion = GetEngineVersion();
+	ASSERT_FINAL_MSG(gEngineVersion == Engine_CSS || gEngineVersion == Engine_CSGO, "Only CSGO and CSS are supported by this plugin!");
 }
 
 void SetupDhooks(GameData gd)
@@ -135,10 +200,13 @@ int TryPlayerMove(CGameMovement pThis, Vector pFirstDest, CGameTrace pFirstTrace
 	pThis.mv.m_vecAbsOrigin.ToArray(fixed_origin);
 	
 	Vector plane_normal;
-	static Vector alloced_vector;
+	static Vector alloced_vector, alloced_vector2;
 	
 	if(alloced_vector.Address == Address_Null)
 		alloced_vector = Vector();
+	
+	if(alloced_vector2.Address == Address_Null)
+		alloced_vector2 = Vector();
 	
 	for(bumpcount = 0; bumpcount < numbumps; bumpcount++)
 	{
@@ -192,6 +260,7 @@ int TryPlayerMove(CGameMovement pThis, Vector pFirstDest, CGameTrace pFirstTrace
 			}
 			else
 			{
+				//Quite heavy part of the code, should not be triggered much or else it'll impact performance by a lot!!!
 				float offsets[3];
 				offsets[0] = (bumpcount * 2.0) * -gRampInitialRetraceLength.FloatValue;
 				offsets[2] = (bumpcount * 2.0) * gRampInitialRetraceLength.FloatValue;
@@ -201,6 +270,7 @@ int TryPlayerMove(CGameMovement pThis, Vector pFirstDest, CGameTrace pFirstTrace
 				
 				float offset[3], offset_mins[3], offset_maxs[3], buff[3];
 				Ray_t ray = Ray_t();
+				PROF_START;
 				for(i = 0; i < 3; i++)
 				{
 					for(j = 0; j < 3; j++)
@@ -230,10 +300,18 @@ int TryPlayerMove(CGameMovement pThis, Vector pFirstDest, CGameTrace pFirstTrace
 							if(offset[2] < 0.0)
 								offset_maxs[2] /= 2.0;
 							
-							ray.Init((AddVectors(fixed_origin, offset, buff), buff), (SubtractVectors(end, offset, offset), offset),
-									(SubtractVectors(VectorToArray(GetPlayerMins(pThis)), offset_mins, offset_mins), offset_mins), 
-									(AddVectors(VectorToArray(GetPlayerMaxs(pThis)), offset_maxs, offset_maxs), offset_maxs));
+							if(gEngineVersion == Engine_CSGO)
+								ray.Init((AddVectors(fixed_origin, offset, buff), buff), (SubtractVectors(end, offset, offset), offset),
+										(SubtractVectors(VectorToArray(GetPlayerMins(pThis)), offset_mins, offset_mins), offset_mins), 
+										(AddVectors(VectorToArray(GetPlayerMaxs(pThis)), offset_maxs, offset_maxs), offset_maxs));
+							else
+								ray.Init((AddVectors(fixed_origin, offset, buff), buff), (SubtractVectors(end, offset, offset), offset),
+										(SubtractVectors(VectorToArray(GetPlayerMinsCSS(pThis, alloced_vector)), offset_mins, offset_mins), offset_mins), 
+										(AddVectors(VectorToArray(GetPlayerMaxsCSS(pThis, alloced_vector2)), offset_maxs, offset_maxs), offset_maxs));
+							
 							UTIL_TraceRay(ray, MASK_PLAYERSOLID, pThis, COLLISION_GROUP_PLAYER_MOVEMENT, pm);
+							
+							pm.plane.normal.FromArray(vec3_origin);
 							
 							plane_normal = pm.plane.normal;
 							//PrintToServer(SNAME..."DEBUG: TraceFired! plane_normal: [%f | %f | %f]", plane_normal.x, plane_normal.y, plane_normal.z);
@@ -247,6 +325,7 @@ int TryPlayerMove(CGameMovement pThis, Vector pFirstDest, CGameTrace pFirstTrace
 						}
 					}
 				}
+				PROF_STOP;
 				ray.Free();
 				
 				if(valid_planes > 0 && !CloseEnough(valid_plane, view_as<float>({0.0, 0.0, 0.0})))
@@ -277,21 +356,18 @@ int TryPlayerMove(CGameMovement pThis, Vector pFirstDest, CGameTrace pFirstTrace
 		}
 		else
 		{
-			Vector vec1 = Vector();
-			vec1.FromArray(end);
+			alloced_vector2.FromArray(end);
 			
 			if(stuck_on_ramp && has_valid_plane)
 			{
 				alloced_vector.FromArray(fixed_origin);
 				//TracePlayerBBoxCustom(pThis, fixed_origin, end, MASK_PLAYERSOLID, COLLISION_GROUP_PLAYER_MOVEMENT, pm);
-				TracePlayerBBox(pThis, alloced_vector, vec1, MASK_PLAYERSOLID, COLLISION_GROUP_PLAYER_MOVEMENT, pm);
+				TracePlayerBBox(pThis, alloced_vector, alloced_vector2, MASK_PLAYERSOLID, COLLISION_GROUP_PLAYER_MOVEMENT, pm);
 				pm.plane.normal.FromArray(valid_plane);
 			}
 			else
 				//TracePlayerBBoxCustom(pThis, VectorToArray(pThis.mv.m_vecAbsOrigin), end, MASK_PLAYERSOLID, COLLISION_GROUP_PLAYER_MOVEMENT, pm);
-				TracePlayerBBox(pThis, pThis.mv.m_vecAbsOrigin, vec1, MASK_PLAYERSOLID, COLLISION_GROUP_PLAYER_MOVEMENT, pm);
-			
-			vec1.Free();
+				TracePlayerBBox(pThis, pThis.mv.m_vecAbsOrigin, alloced_vector2, MASK_PLAYERSOLID, COLLISION_GROUP_PLAYER_MOVEMENT, pm);
 		}
 		
 		if(bumpcount > 0 && pThis.player.m_hGroundEntity == view_as<Address>(-1) && !IsValidMovementTrace(pThis, pm))
@@ -371,22 +447,21 @@ int TryPlayerMove(CGameMovement pThis, Vector pFirstDest, CGameTrace pFirstTrace
 		if(numplanes == 1 && pThis.player.m_MoveType == MOVETYPE_WALK && pThis.player.m_hGroundEntity != view_as<Address>(-1))
 		{
 			Vector vec1 = Vector();
-			Vector vec2 = Vector();
 			if(planes[0][2] >= 0.7)
 			{
 				vec1.FromArray(original_velocity);
-				vec2.FromArray(planes[0]);
+				alloced_vector2.FromArray(planes[0]);
 				alloced_vector.FromArray(new_velocity);
-				ClipVelocity(pThis, vec1, vec2, alloced_vector, 1.0);
+				ClipVelocity(pThis, vec1, alloced_vector2, alloced_vector, 1.0);
 				alloced_vector.ToArray(original_velocity);
 				alloced_vector.ToArray(new_velocity);
 			}
 			else
 			{
 				vec1.FromArray(original_velocity);
-				vec2.FromArray(planes[0]);
+				alloced_vector2.FromArray(planes[0]);
 				alloced_vector.FromArray(new_velocity);
-				ClipVelocity(pThis, vec1, vec2, alloced_vector, 1.0 + gBounce.FloatValue * (1.0 - pThis.player.m_surfaceFriction));
+				ClipVelocity(pThis, vec1, alloced_vector2, alloced_vector, 1.0 + gBounce.FloatValue * (1.0 - pThis.player.m_surfaceFriction));
 				alloced_vector.ToArray(new_velocity);
 			}
 			
@@ -394,16 +469,14 @@ int TryPlayerMove(CGameMovement pThis, Vector pFirstDest, CGameTrace pFirstTrace
 			VectorCopy(new_velocity, original_velocity);
 			
 			vec1.Free();
-			vec2.Free();
 		}
 		else
 		{
-			Vector vec1 = Vector();
 			for(i = 0; i < numplanes; i++)
 			{
-				vec1.FromArray(original_velocity);
+				alloced_vector2.FromArray(original_velocity);
 				alloced_vector.FromArray(planes[i]);
-				ClipVelocity(pThis, vec1, alloced_vector, vecVelocity, 1.0);
+				ClipVelocity(pThis, alloced_vector2, alloced_vector, vecVelocity, 1.0);
 				alloced_vector.ToArray(planes[i]);
 				
 				for(j = 0; j < numplanes; j++)
@@ -414,7 +487,6 @@ int TryPlayerMove(CGameMovement pThis, Vector pFirstDest, CGameTrace pFirstTrace
 				if(j == numplanes)
 					break;
 			}
-			vec1.Free();
 			
 			if(i != numplanes)
 			{
@@ -558,15 +630,27 @@ stock bool IsValidMovementTrace(CGameMovement pThis, CGameTrace tr)
 
 stock void UTIL_TraceRay(Ray_t ray, int mask, CGameMovement gm, int collisionGroup, CGameTrace trace)
 {
-	CTraceFilterSimple filter = LockTraceFilter(gm, collisionGroup);
-	
-	gm.m_nTraceCount++;
-	ITraceListData tracelist = gm.m_pTraceListData;
-	
-	if(tracelist.Address != Address_Null && tracelist.CanTraceRay(ray))
-		TraceRayAgainstLeafAndEntityList(ray, tracelist, mask, filter, trace);
-	else
+	if(gEngineVersion == Engine_CSGO)
+	{
+		CTraceFilterSimple filter = LockTraceFilter(gm, collisionGroup);
+		
+		gm.m_nTraceCount++;
+		ITraceListData tracelist = gm.m_pTraceListData;
+		
+		if(tracelist.Address != Address_Null && tracelist.CanTraceRay(ray))
+			TraceRayAgainstLeafAndEntityList(ray, tracelist, mask, filter, trace);
+		else
+			TraceRay(ray, mask, filter, trace);
+		
+		UnlockTraceFilter(gm, filter);
+	}
+	else if(gEngineVersion == Engine_CSS)
+	{
+		CTraceFilterSimple filter = CTraceFilterSimple();
+		filter.Init(LookupEntity(gm.mv.m_nPlayerHandle), collisionGroup);
+		
 		TraceRay(ray, mask, filter, trace);
-	
-	UnlockTraceFilter(gm, filter);
+		
+		filter.Free();
+	}
 }

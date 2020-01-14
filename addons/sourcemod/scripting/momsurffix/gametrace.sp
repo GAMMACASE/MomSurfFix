@@ -48,10 +48,12 @@ enum struct Ray_tOffsets
 
 enum struct CTraceFilterSimpleOffsets
 {
+	int vptr;
 	int m_pPassEnt;
 	int m_collisionGroup;
 	int m_pExtraShouldHitCheckFunction;
 	int size;
+	Address vtable;
 }
 
 enum struct GameTraceOffsets
@@ -238,13 +240,18 @@ methodmap Ray_t < AllocatableBase
 		return MALLOC(Ray_t);
 	}
 	
+	//That function is quite heavy, linux builds have it inlined, so can't use it!
+	//Replacing this function with lighter alternative may increase speed by ~4 times!
+	//From my testings the main performance killer here is StoreToAddress()....
 	public void Init(float start[3], float end[3], float mins[3], float maxs[3])
 	{
 		float buff[3], buff2[3];
+		
 		SubtractVectors(end, start, buff);
 		this.m_Delta.FromArray(buff);
 		
-		this.m_pWorldAxisTransform = Address_Null;
+		if(gEngineVersion == Engine_CSGO)
+			this.m_pWorldAxisTransform = Address_Null;
 		this.m_IsSwept = (this.m_Delta.LengthSqr() != 0.0);
 		
 		SubtractVectors(maxs, mins, buff);
@@ -269,10 +276,16 @@ methodmap CTraceFilterSimple < AllocatableBase
 		return offsets.ctfsoffsets.size;
 	}
 	
-	property Address m_pPassEnt
+	property Address vptr
 	{
-		public get() { return view_as<Address>(LoadFromAddress(this.Address + offsets.ctfsoffsets.m_pPassEnt, NumberType_Int32)); }
-		public set(Address _passent) { StoreToAddress(this.Address + offsets.ctfsoffsets.m_pPassEnt, view_as<int>(_passent), NumberType_Int32); }
+		public get() { return view_as<Address>(LoadFromAddress(this.Address + offsets.ctfsoffsets.vptr, NumberType_Int32)); }
+		public set(Address _vtbladdr) { StoreToAddress(this.Address + offsets.ctfsoffsets.vptr, view_as<int>(_vtbladdr), NumberType_Int32); }
+	}
+	
+	property CBaseHandle m_pPassEnt
+	{
+		public get() { return view_as<CBaseHandle>(LoadFromAddress(this.Address + offsets.ctfsoffsets.m_pPassEnt, NumberType_Int32)); }
+		public set(CBaseHandle _passent) { StoreToAddress(this.Address + offsets.ctfsoffsets.m_pPassEnt, view_as<int>(_passent), NumberType_Int32); }
 	}
 	
 	property int m_collisionGroup
@@ -289,10 +302,12 @@ methodmap CTraceFilterSimple < AllocatableBase
 	
 	public CTraceFilterSimple()
 	{
-		return view_as<CTraceFilterSimple>(AllocatableBase._malloc(CTraceFilterSimple.Size()));
+		CTraceFilterSimple addr = MALLOC(CTraceFilterSimple);
+		addr.vptr = offsets.ctfsoffsets.vtable;
+		return addr;
 	}
 	
-	public void Init(Address passentity, int collisionGroup, Address pExtraShouldHitCheckFn = Address_Null)
+	public void Init(CBaseHandle passentity, int collisionGroup, Address pExtraShouldHitCheckFn = Address_Null)
 	{
 		this.m_pPassEnt = passentity;
 		this.m_collisionGroup = collisionGroup;
@@ -377,8 +392,13 @@ stock void InitGameTrace(GameData gd)
 	offsets.rtoffsets.m_StartOffset = StringToInt(buff);
 	ASSERT_FMT(gd.GetKeyValue("Ray_t::m_Extents", buff, sizeof(buff)), "Can't get \"Ray_t::m_Extents\" offset from gamedata.");
 	offsets.rtoffsets.m_Extents = StringToInt(buff);
-	ASSERT_FMT(gd.GetKeyValue("Ray_t::m_pWorldAxisTransform", buff, sizeof(buff)), "Can't get \"Ray_t::m_pWorldAxisTransform\" offset from gamedata.");
-	offsets.rtoffsets.m_pWorldAxisTransform = StringToInt(buff);
+	
+	if(gEngineVersion == Engine_CSGO)
+	{
+		ASSERT_FMT(gd.GetKeyValue("Ray_t::m_pWorldAxisTransform", buff, sizeof(buff)), "Can't get \"Ray_t::m_pWorldAxisTransform\" offset from gamedata.");
+		offsets.rtoffsets.m_pWorldAxisTransform = StringToInt(buff);
+	}
+	
 	ASSERT_FMT(gd.GetKeyValue("Ray_t::m_IsRay", buff, sizeof(buff)), "Can't get \"Ray_t::m_IsRay\" offset from gamedata.");
 	offsets.rtoffsets.m_IsRay = StringToInt(buff);
 	ASSERT_FMT(gd.GetKeyValue("Ray_t::m_IsSwept", buff, sizeof(buff)), "Can't get \"Ray_t::m_IsSwept\" offset from gamedata.");
@@ -387,6 +407,8 @@ stock void InitGameTrace(GameData gd)
 	offsets.rtoffsets.size = StringToInt(buff);
 	
 	//CTraceFilterSimple
+	ASSERT_FMT(gd.GetKeyValue("CTraceFilterSimple::vptr", buff, sizeof(buff)), "Can't get \"CTraceFilterSimple::vptr\" offset from gamedata.");
+	offsets.ctfsoffsets.vptr = StringToInt(buff);
 	ASSERT_FMT(gd.GetKeyValue("CTraceFilterSimple::m_pPassEnt", buff, sizeof(buff)), "Can't get \"CTraceFilterSimple::m_pPassEnt\" offset from gamedata.");
 	offsets.ctfsoffsets.m_pPassEnt = StringToInt(buff);
 	ASSERT_FMT(gd.GetKeyValue("CTraceFilterSimple::m_collisionGroup", buff, sizeof(buff)), "Can't get \"CTraceFilterSimple::m_collisionGroup\" offset from gamedata.");
@@ -396,9 +418,16 @@ stock void InitGameTrace(GameData gd)
 	ASSERT_FMT(gd.GetKeyValue("CTraceFilterSimple::size", buff, sizeof(buff)), "Can't get \"CTraceFilterSimple::size\" offset from gamedata.");
 	offsets.ctfsoffsets.size = StringToInt(buff);
 	
+	if(gEngineVersion == Engine_CSS)
+	{
+		offsets.ctfsoffsets.vtable = gd.GetAddress("CTraceFilterSimple::vtable");
+		ASSERT_MSG(offsets.ctfsoffsets.vtable != Address_Null, "Can't get \"CTraceFilterSimple::vtable\" address from gamedata.");
+	}
+	
 	//enginetrace
-	gEngineTrace = gd.GetAddress("enginetrace");
-	ASSERT(gEngineTrace != Address_Null);
+	gd.GetKeyValue("CEngineTrace", buff, sizeof(buff));
+	gEngineTrace = CreateInterface(buff);
+	ASSERT_MSG(gEngineTrace != Address_Null, "Can't create \"enginetrace\" from CreateInterface().");
 	
 	//RayTrace
 	StartPrepSDKCall(SDKCall_Raw);
@@ -412,29 +441,32 @@ stock void InitGameTrace(GameData gd)
 	gTraceRay = EndPrepSDKCall();
 	ASSERT(gTraceRay);
 	
-	//TraceRayAgainstLeafAndEntityList
-	StartPrepSDKCall(SDKCall_Raw);
-	
-	PrepSDKCall_SetVirtual(gd.GetOffset("TraceRayAgainstLeafAndEntityList"));
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
-	
-	gTraceRayAgainstLeafAndEntityList = EndPrepSDKCall();
-	ASSERT(gTraceRayAgainstLeafAndEntityList);
-	
-	//CanTraceRay
-	StartPrepSDKCall(SDKCall_Raw);
-	
-	PrepSDKCall_SetVirtual(gd.GetOffset("CanTraceRay"));
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
-	
-	PrepSDKCall_SetReturnInfo(SDKType_Bool, SDKPass_Plain);
-	
-	gCanTraceRay = EndPrepSDKCall();
-	ASSERT(gCanTraceRay);
+	if(gEngineVersion == Engine_CSGO)
+	{
+		//TraceRayAgainstLeafAndEntityList
+		StartPrepSDKCall(SDKCall_Raw);
+		
+		PrepSDKCall_SetVirtual(gd.GetOffset("TraceRayAgainstLeafAndEntityList"));
+		PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+		PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+		PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+		PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+		PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+		
+		gTraceRayAgainstLeafAndEntityList = EndPrepSDKCall();
+		ASSERT(gTraceRayAgainstLeafAndEntityList);
+		
+		//CanTraceRay
+		StartPrepSDKCall(SDKCall_Raw);
+		
+		PrepSDKCall_SetVirtual(gd.GetOffset("CanTraceRay"));
+		PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+		
+		PrepSDKCall_SetReturnInfo(SDKType_Bool, SDKPass_Plain);
+		
+		gCanTraceRay = EndPrepSDKCall();
+		ASSERT(gCanTraceRay);
+	}
 }
 
 stock void TraceRayAgainstLeafAndEntityList(Ray_t ray, ITraceListData traceData, int mask, CTraceFilterSimple filter, CGameTrace trace)

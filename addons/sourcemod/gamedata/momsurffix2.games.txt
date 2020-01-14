@@ -1,6 +1,6 @@
 "Games"
 {
-	"csgo"
+	"#default"
 	{
 		"Keys"
 		{
@@ -10,11 +10,6 @@
 			//...
 			"CGameMovement::m_pTraceListData"	"3660"
 			"CGameMovement::m_nTraceCount"		"3664"
-			
-			//CMoveData		
-			"CMoveData::m_vecVelocity"			"64"
-			//...
-			"CMoveData::m_vecAbsOrigin"			"172"
 			
 			//cplane_t		
 			"cplane_t::normal"					"0"
@@ -43,6 +38,241 @@
 			"CGameTrace::m_pEnt"				"74"
 			"CGameTrace::hitbox"				"80"
 			"CGameTrace::size"					"84"
+			
+			//CTraceFilterSimple
+			"CTraceFilterSimple::vptr"								"0"
+			"CTraceFilterSimple::m_pPassEnt"						"4"
+			"CTraceFilterSimple::m_collisionGroup"					"8"
+			"CTraceFilterSimple::m_pExtraShouldHitCheckFunction"	"12"
+			"CTraceFilterSimple::size"								"16"
+		}
+		
+		"Offsets"
+		{
+			"OSType"
+			{
+				"windows"		"1"
+				"linux"			"2"
+			}
+		}
+		
+		"Signatures"
+		{
+			"CreateInterface"
+			{
+				"library"		"engine"
+				"windows"		"@CreateInterface"
+				"linux"			"@CreateInterface"
+			}
+		}
+	}
+	
+	"cstrike"
+	{
+		"Keys"
+		{
+			//EngineTrace interface name
+			"CEngineTrace"	"EngineTraceServer003"
+		
+			//CMoveData
+			"CMoveData::m_nPlayerHandle"		"4"
+			"CMoveData::m_vecVelocity"			"64"
+			//...
+			"CMoveData::m_vecAbsOrigin"			"152"
+			
+			//CBaseHandle
+			"CBaseHandle::m_Index"				"0"
+			
+			//CBaseEntityList
+			"CBaseEntityList::m_EntPtrArray"	"0"
+			
+			//CEntInfo
+			"CEntInfo::m_pEntity"				"4"
+			"CEntInfo::m_SerialNumber"			"8"
+			//...
+			"CEntInfo::size"					"16"
+			
+			//CBasePlayer
+			"CBasePlayer::m_surfaceFriction"	"3832"
+			
+			//Ray_t
+			"Ray_t::m_Start"					"0"
+			"Ray_t::m_Delta"					"16"
+			"Ray_t::m_StartOffset"				"32"
+			"Ray_t::m_Extents"					"48"
+			"Ray_t::m_IsRay"					"64"
+			"Ray_t::m_IsSwept"					"65"
+			"Ray_t::size"						"66"
+		}
+		
+		"Addresses"
+		{
+			"g_pMemAlloc"
+			{
+				"windows"
+				{
+					"signature" "g_pMemAllocFunc"
+					"read" "253"
+					"read" "0"
+					"read" "0"
+				}
+			}
+			
+			"g_pEntityList"
+			{
+				"windows"
+				{
+					"signature"	"CGameMovement::TracePlayerBBox"
+					"read" "83"
+				}
+				"linux"
+				{
+					"signature"	"CGameMovement::TracePlayerBBox"
+					"read"	"579"
+				}
+			}
+			
+			"sm_pSingleton"
+			{
+				"windows"
+				{
+					"signature"	"CGameMovement::TryPlayerMove"
+					"read" "667"
+				}
+				"linux"
+				{
+					"signature"	"CGameMovement::TryPlayerMove"
+					"read"	"536"
+				}
+				
+				"read" "0"
+			}
+			
+			"CTraceFilterSimple::vtable"
+			{
+				"windows"
+				{
+					"signature"	"CTraceFilterSimple::CTraceFilterSimple"
+					"read" "25"
+				}
+				"linux"
+				{
+					"signature"	"CTraceFilterSimple::CTraceFilterSimple"
+					"read" "11"
+				}
+			}
+		}
+		
+		"Signatures"
+		{
+			"CMoveHelperServer::CMoveHelperServer"
+			{
+				"library"		"server"
+				"windows"		"\xA1\x2A\x2A\x2A\x2A\xA8\x01\x75\x2A\x83\xC8\x01\xC7\x05\x2A\x2A\x2A\x2A\x2A\x2A\x2A\x2A\xA3\x2A\x2A\x2A\x2A\xA1\x2A\x2A\x2A\x2A\xC7\x05\x2A\x2A\x2A\x2A\x00\x00\x00\x00"
+				"linux"			"@_ZN17CMoveHelperServerC2Ev"
+			}
+			
+			"CTraceFilterSimple::CTraceFilterSimple"
+			{
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x8B\x45\x08\x89\x41\x04\x8B\x45\x0C\x89\x41\x08\x8B\x45\x10\x89\x41\x0C\x8B\xC1\xC7\x01\x2A\x2A\x2A\x2A\x5D"
+				"linux"			"@_ZN18CTraceFilterSimpleC2EPK13IHandleEntityiPFbPS0_iE"
+			}
+			
+			"CGameMovement::TracePlayerBBox"
+			{
+				"library"		"server"
+				"windows"		"\x53\x8B\xDC\x83\xEC\x08\x83\xE4\xF0\x83\xC4\x04\x55\x8B\x6B\x04\x89\x6C\x24\x04\x8B\xEC\x83\xEC\x7C\x56"
+				"linux"			"@_ZN13CGameMovement15TracePlayerBBoxERK6VectorS2_jiR10CGameTrace"
+			}
+			
+			"CGameMovement::TryPlayerMove"
+			{
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x81\xEC\x20\x01\x00\x00\xF3\x0F\x10\x1D\x2A\x2A\x2A\x2A"
+				"linux"			"@_ZN13CGameMovement13TryPlayerMoveEP6VectorP10CGameTrace"
+			}
+			
+			"g_pMemAllocFunc"
+			{
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x83\xEC\x20\x8B\x45\x08\xB9\x2A\x2A\x2A\x2A"
+			}
+			
+			"CGameMovement::ClipVelocity"
+			{
+				"library"		"server"
+				"linux"			"@_ZN13CGameMovement12ClipVelocityER6VectorS1_S1_f"
+			}
+			
+			"malloc"
+			{
+				"library"		"engine"
+				"linux"			"@_ZL7SzAllocPvj"
+			}
+			
+			"free"
+			{
+				"library"		"engine"
+				"linux"			"@_ZL6SzFreePvS_"
+			}
+		}
+		
+		"Offsets"
+		{
+			"AddToTouched"
+			{
+				"windows"		"2"
+				"linux"			"2"
+			}
+			
+			"TraceRay"
+			{
+				"windows"		"4"
+				"linux"			"4"
+			}
+			
+			"TracePlayerBBox"
+			{
+				"windows"		"10"
+				"linux"			"9"
+			}
+			
+			"GetPlayerMaxs"
+			{
+				"windows"		"9"
+				"linux"			"7"
+			}
+			
+			"GetPlayerMins"
+			{
+				"windows"		"8"
+				"linux"			"6"
+			}
+			
+			"Malloc"
+			{
+				"windows"		"1"
+			}
+			
+			"Free"
+			{
+				"windows"		"5"
+			}
+		}
+	}
+	
+	"csgo"
+	{
+		"Keys"
+		{
+			//EngineTrace interface name
+			"CEngineTrace"	"EngineTraceServer004"
+			
+			//CMoveData		
+			"CMoveData::m_vecVelocity"			"64"
+			//...
+			"CMoveData::m_vecAbsOrigin"			"172"
 		
 			//CBasePlayer
 			"CBasePlayer::m_surfaceFriction"	"4660"
@@ -56,12 +286,6 @@
 			"Ray_t::m_IsRay"					"68"
 			"Ray_t::m_IsSwept"					"69"
 			"Ray_t::size"						"70"
-			
-			//CTraceFilterSimple
-			"CTraceFilterSimple::m_pPassEnt"						"4"
-			"CTraceFilterSimple::m_collisionGroup"					"8"
-			"CTraceFilterSimple::m_pExtraShouldHitCheckFunction"	"12"
-			"CTraceFilterSimple::size"								"16"
 		}
 		
 		"Addresses"
@@ -71,32 +295,16 @@
 				"windows"
 				{
 					"signature" "g_pMemAllocFunc"
-					"read"	"20"
-					"read"	"0"
+					"read" "20"
+					"read" "0"
 				}
 				"linux"
 				{
 					"signature" "g_pMemAllocFunc"
-					"read"	"142"
+					"read" "142"
 				}
 				
 				"read"	"0"
-			}
-			
-			"enginetrace"
-			{
-				"windows"
-				{
-					"signature"	"CGameMovement::TracePlayerBBox"
-					"read"	"111"
-				}
-				"linux"
-				{
-					"signature"	"CGameMovement::TracePlayerBBox"
-					"read"	"465"
-				}
-				
-				"read" "0"
 			}
 			
 			"sm_pSingleton"
@@ -104,12 +312,12 @@
 				"windows"
 				{
 					"signature"	"CGameMovement::TryPlayerMove"
-					"read"	"700"
+					"read" "700"
 				}
 				"linux"
 				{
 					"signature"	"CGameMovement::TryPlayerMove"
-					"read"	"596"
+					"read" "596"
 				}
 				
 				"read" "0"
@@ -211,12 +419,6 @@
 			"Free"
 			{
 				"windows"		"5"
-				"linux"			"2"
-			}
-			
-			"OSType"
-			{
-				"windows"		"1"
 				"linux"			"2"
 			}
 		}
