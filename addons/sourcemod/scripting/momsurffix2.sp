@@ -216,7 +216,7 @@ int TryPlayerMove(CGameMovement pThis, Vector pFirstDest, CGameTrace pFirstTrace
 	for(bumpcount = 0; bumpcount < numbumps; bumpcount++)
 	{
 		//TODO: should be replaced with normal solution!! Currently hack to fix issue #1.
-		if(vecVelocity.LengthSqr() == 0.0 || (vecVelocity.x == 0.0 && vecVelocity.y == 0.0 && vecVelocity.z == -6.25))
+		if(vecVelocity.LengthSqr() == 0.0 || vecVelocity.z == -6.25)
 			break;
 		
 		if(stuck_on_ramp)
