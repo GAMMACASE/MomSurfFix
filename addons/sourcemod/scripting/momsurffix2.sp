@@ -151,7 +151,9 @@ stock void Prof_Check()
 }
 #endif
 
-/*public Action SM_TestMem(int client, int args)
+/*CGameMovement dummy;
+
+public Action SM_TestMem(int client, int args)
 {
 	return Plugin_Handled;
 }*/
@@ -180,6 +182,9 @@ public MRESReturn TryPlayerMove_Dhook(Address pThis, Handle hReturn, Handle hPar
 {
 	Address pFirstDest = DHookGetParam(hParams, 1);
 	Address pFirstTrace = DHookGetParam(hParams, 2);
+	
+	/*dummy = view_as<CGameMovement>(pThis);
+	SM_TestMem(0, 0);*/
 	
 	DHookSetReturn(hReturn, TryPlayerMove(view_as<CGameMovement>(pThis), view_as<Vector>(pFirstDest), view_as<CGameTrace>(pFirstTrace)));
 	

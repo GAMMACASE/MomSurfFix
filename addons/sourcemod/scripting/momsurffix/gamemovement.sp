@@ -227,29 +227,56 @@ stock void InitGameMovement(GameData gd)
 		ASSERT(gClipVelocity);
 	}
 	
-	//GetPlayerMins
-	StartPrepSDKCall(SDKCall_Raw);
-	
-	PrepSDKCall_SetVirtual(gd.GetOffset("GetPlayerMins"));
-	
-	if(gEngineVersion == Engine_CSS)
+	if(gEngineVersion == Engine_CSGO || gOSType == OSWindows)
+	{
+		//GetPlayerMins
+		StartPrepSDKCall(SDKCall_Raw);
+		
+		PrepSDKCall_SetVirtual(gd.GetOffset("GetPlayerMins"));
+		
+		if(gEngineVersion == Engine_CSS)
+			PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+		PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
+		
+		gGetPlayerMins = EndPrepSDKCall();
+		ASSERT(gGetPlayerMins);
+		
+		//GetPlayerMaxs
+		StartPrepSDKCall(SDKCall_Raw);
+		
+		PrepSDKCall_SetVirtual(gd.GetOffset("GetPlayerMaxs"));
+		
+		if(gEngineVersion == Engine_CSS)
+			PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+		PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
+		
+		gGetPlayerMaxs = EndPrepSDKCall();
+		ASSERT(gGetPlayerMaxs);
+	}
+	else
+	{
+		//GetPlayerMins
+		StartPrepSDKCall(SDKCall_Static);
+		
+		ASSERT_MSG(PrepSDKCall_SetFromConf(gd, SDKConf_Signature, "CGameMovement::GetPlayerMins"), "Failed to get \"CGameMovement::GetPlayerMins\" signature.");
+		
 		PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
-	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
-	
-	gGetPlayerMins = EndPrepSDKCall();
-	ASSERT(gGetPlayerMins);
-	
-	//GetPlayerMaxs
-	StartPrepSDKCall(SDKCall_Raw);
-	
-	PrepSDKCall_SetVirtual(gd.GetOffset("GetPlayerMaxs"));
-	
-	if(gEngineVersion == Engine_CSS)
 		PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
-	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
-	
-	gGetPlayerMaxs = EndPrepSDKCall();
-	ASSERT(gGetPlayerMaxs);
+		
+		gGetPlayerMins = EndPrepSDKCall();
+		ASSERT(gGetPlayerMins);
+		
+		//GetPlayerMaxs
+		StartPrepSDKCall(SDKCall_Static);
+		
+		ASSERT_MSG(PrepSDKCall_SetFromConf(gd, SDKConf_Signature, "CGameMovement::GetPlayerMaxs"), "Failed to get \"CGameMovement::GetPlayerMaxs\" signature.");
+		
+		PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+		PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+		
+		gGetPlayerMaxs = EndPrepSDKCall();
+		ASSERT(gGetPlayerMaxs);
+	}
 	
 	//TracePlayerBBox
 	StartPrepSDKCall(SDKCall_Raw);
@@ -348,12 +375,24 @@ stock int ClipVelocity(CGameMovement pThis, Vector invec, Vector normal, Vector 
 
 stock Vector GetPlayerMinsCSS(CGameMovement pThis, Vector vec)
 {
-	return SDKCall(gGetPlayerMins, pThis.Address, vec.Address);
+	if(gOSType == OSLinux)
+	{
+		SDKCall(gGetPlayerMins, vec.Address, pThis.Address);
+		return vec;
+	}
+	else
+		return SDKCall(gGetPlayerMins, pThis.Address, vec.Address);
 }
 
 stock Vector GetPlayerMaxsCSS(CGameMovement pThis, Vector vec)
 {
-	return SDKCall(gGetPlayerMaxs, pThis.Address, vec.Address);
+	if(gOSType == OSLinux)
+	{
+		SDKCall(gGetPlayerMaxs, vec.Address, pThis.Address);
+		return vec;
+	}
+	else
+		return SDKCall(gGetPlayerMaxs, pThis.Address, vec.Address);
 }
 
 stock Vector GetPlayerMins(CGameMovement pThis)

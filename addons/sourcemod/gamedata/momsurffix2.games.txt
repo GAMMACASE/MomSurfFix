@@ -205,6 +205,18 @@
 				"linux"			"@_ZN13CGameMovement12ClipVelocityER6VectorS1_S1_f"
 			}
 			
+			"CGameMovement::GetPlayerMaxs"
+			{
+				"library"		"server"
+				"linux"			"@_ZNK13CGameMovement13GetPlayerMaxsEb"
+			}
+			
+			"CGameMovement::GetPlayerMins"
+			{
+				"library"		"server"
+				"linux"			"@_ZNK13CGameMovement13GetPlayerMinsEb"
+			}
+			
 			"malloc"
 			{
 				"library"		"engine"
@@ -241,13 +253,11 @@
 			"GetPlayerMaxs"
 			{
 				"windows"		"9"
-				"linux"			"7"
 			}
 			
 			"GetPlayerMins"
 			{
 				"windows"		"8"
-				"linux"			"6"
 			}
 			
 			"Malloc"
