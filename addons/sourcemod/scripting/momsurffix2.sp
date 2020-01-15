@@ -215,13 +215,12 @@ int TryPlayerMove(CGameMovement pThis, Vector pFirstDest, CGameTrace pFirstTrace
 	
 	for(bumpcount = 0; bumpcount < numbumps; bumpcount++)
 	{
-		//TODO: should be replaced with normal solution!! Currently hack to fix issue #1.
-		if(vecVelocity.LengthSqr() == 0.0 || vecVelocity.z == -6.25)
+		if(vecVelocity.LengthSqr() == 0.0)
 			break;
 		
 		if(stuck_on_ramp)
 		{
-			//PrintToServer(SNAME..."[%i] Stuck!!!", GetGameTickCount());
+			//PrintToServer(SNAME..."[%i] Stucked!!!", GetGameTickCount());
 			
 			if(!has_valid_plane)
 			{
@@ -263,7 +262,8 @@ int TryPlayerMove(CGameMovement pThis, Vector pFirstDest, CGameTrace pFirstTrace
 				}
 				alloced_vector.ToArray(valid_plane);
 			}
-			else
+			//TODO: should be replaced with normal solution!! Currently hack to fix issue #1.
+			else if(vecVelocity.z < -6.25 && vecVelocity.z > 0.0)
 			{
 				//Quite heavy part of the code, should not be triggered much or else it'll impact performance by a lot!!!
 				float offsets[3];
