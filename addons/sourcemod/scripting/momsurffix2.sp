@@ -6,12 +6,13 @@
 #define SNAME "[momsurffix2] "
 #define GAME_DATA_FILE "momsurffix2.games"
 //#define DEBUG_PROFILE
+//#define DEBUG_MEMTEST
 
 public Plugin myinfo = {
     name = "Momentum surf fix \'2",
     author = "GAMMA CASE",
     description = "Ported surf fix from momentum mod.",
-    version = "1.0.6",
+    version = "1.1.0",
     url = "http://steamcommunity.com/id/_GAMMACASE_/"
 };
 
@@ -71,8 +72,9 @@ float gProfTime;
 
 public void OnPluginStart()
 {
-	//RegAdminCmd("sm_testmem", SM_TestMem, ADMFLAG_ROOT);
+#if defined DEBUG_MEMTEST
 	RegAdminCmd("sm_mom_dumpmempool", SM_Dumpmempool, ADMFLAG_ROOT, "Dumps active momory pool. Mainly for debugging.");
+#endif
 #if defined DEBUG_PROFILE
 	RegAdminCmd("sm_mom_prof", SM_Prof, ADMFLAG_ROOT, "Profiles performance of some expensive parts. Mainly for debugging.");
 #endif
@@ -120,12 +122,14 @@ public void OnPluginEnd()
 		gASMPatch.Restore();
 }
 
+#if defined DEBUG_MEMTEST
 public Action SM_Dumpmempool(int client, int args)
 {
 	DumpMemoryUsage();
 	
 	return Plugin_Handled;
 }
+#endif
 
 #if defined DEBUG_PROFILE
 public Action SM_Prof(int client, int args)
@@ -186,13 +190,6 @@ public Action Prof_Check_Timer(Handle timer, int client)
 	delete gProfData;
 }
 #endif
-
-/*CGameMovement dummy;
-
-public Action SM_TestMem(int client, int args)
-{
-	return Plugin_Handled;
-}*/
 
 void SetupASMOptimizations(GameData gd)
 {
@@ -261,9 +258,6 @@ public MRESReturn TryPlayerMove_Dhook(Address pThis, Handle hReturn, Handle hPar
 	Address pFirstDest = DHookGetParam(hParams, 1);
 	Address pFirstTrace = DHookGetParam(hParams, 2);
 	
-	/*dummy = view_as<CGameMovement>(pThis);
-	SM_TestMem(0, 0);*/
-	
 	DHookSetReturn(hReturn, TryPlayerMove(view_as<CGameMovement>(pThis), view_as<Vector>(pFirstDest), view_as<CGameTrace>(pFirstTrace)));
 	
 	return MRES_Supercede;
@@ -299,8 +293,6 @@ int TryPlayerMove(CGameMovement pThis, Vector pFirstDest, CGameTrace pFirstTrace
 		
 		if(stuck_on_ramp)
 		{
-			//PrintToServer(SNAME..."[%i] Stucked!!!", GetGameTickCount());
-			
 			if(!has_valid_plane)
 			{
 				plane_normal = pm.plane.normal;
@@ -406,7 +398,6 @@ int TryPlayerMove(CGameMovement pThis, Vector pFirstDest, CGameTrace pFirstTrace
 							
 							PROF_START();
 							plane_normal = pm.plane.normal;
-							//PrintToServer(SNAME..."DEBUG: TraceFired! plane_normal: [%f | %f | %f]", plane_normal.x, plane_normal.y, plane_normal.z);
 							
 							if(FloatAbs(plane_normal.x) <= 1.0 && FloatAbs(plane_normal.y) <= 1.0 &&
 								FloatAbs(plane_normal.z) <= 1.0 && pm.fraction > 0.0 && pm.fraction < 1.0 && !pm.startsolid)
