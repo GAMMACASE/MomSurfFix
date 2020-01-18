@@ -79,10 +79,10 @@ public void OnPluginStart()
 	RegAdminCmd("sm_mom_prof", SM_Prof, ADMFLAG_ROOT, "Profiles performance of some expensive parts. Mainly for debugging.");
 #endif
 	
-	gRampBumpCount = CreateConVar("momsuffix_ramp_bumpcount", "8", "Helps with fixing surf/ramp bugs", .hasMin = true, .min = 4.0, .hasMax = true, .max = 16.0);
-	gRampInitialRetraceLength = CreateConVar("momsuffix_ramp_initial_retrace_length", "0.2", "Amount of units used in offset for retraces", .hasMin = true, .min = 0.2, .hasMax = true, .max = 5.0);
-	gASMOptimizations = CreateConVar("momsuffix_enable_asm_optimizations", "1", "Enables ASM optimizations, that may improve performance of the plugin", .hasMin = true, .min = 0.0, .hasMax = true, .max = 1.0);
-	gNoclipWorkAround = CreateConVar("momsuffix_enable_noclip_workaround", "1", "Enables workaround to prevent issue #1, can actually help if momsuffix_enable_asm_optimizations is 0", .hasMin = true, .min = 0.0, .hasMax = true, .max = 1.0);
+	gRampBumpCount = CreateConVar("momsurffix_ramp_bumpcount", "8", "Helps with fixing surf/ramp bugs", .hasMin = true, .min = 4.0, .hasMax = true, .max = 16.0);
+	gRampInitialRetraceLength = CreateConVar("momsurffix_ramp_initial_retrace_length", "0.2", "Amount of units used in offset for retraces", .hasMin = true, .min = 0.2, .hasMax = true, .max = 5.0);
+	gASMOptimizations = CreateConVar("momsurffix_enable_asm_optimizations", "1", "Enables ASM optimizations, that may improve performance of the plugin", .hasMin = true, .min = 0.0, .hasMax = true, .max = 1.0);
+	gNoclipWorkAround = CreateConVar("momsurffix_enable_noclip_workaround", "1", "Enables workaround to prevent issue #1, can actually help if momsuffix_enable_asm_optimizations is 0", .hasMin = true, .min = 0.0, .hasMax = true, .max = 1.0);
 	gBounce = FindConVar("sv_bounce");
 	ASSERT_MSG(gBounce, "\"sv_bounce\" convar wasn't found!");
 	
