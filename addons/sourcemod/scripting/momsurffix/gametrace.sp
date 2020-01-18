@@ -279,25 +279,25 @@ methodmap CTraceFilterSimple < AllocatableBase
 	property Address vptr
 	{
 		public get() { return view_as<Address>(LoadFromAddress(this.Address + offsets.ctfsoffsets.vptr, NumberType_Int32)); }
-		public set(Address _vtbladdr) { StoreToAddress(this.Address + offsets.ctfsoffsets.vptr, view_as<int>(_vtbladdr), NumberType_Int32); }
+		public set(Address _vtbladdr) { StoreToAddressCustom(this.Address + offsets.ctfsoffsets.vptr, view_as<int>(_vtbladdr), NumberType_Int32); }
 	}
 	
 	property CBaseHandle m_pPassEnt
 	{
 		public get() { return view_as<CBaseHandle>(LoadFromAddress(this.Address + offsets.ctfsoffsets.m_pPassEnt, NumberType_Int32)); }
-		public set(CBaseHandle _passent) { StoreToAddress(this.Address + offsets.ctfsoffsets.m_pPassEnt, view_as<int>(_passent), NumberType_Int32); }
+		public set(CBaseHandle _passent) { StoreToAddressCustom(this.Address + offsets.ctfsoffsets.m_pPassEnt, view_as<int>(_passent), NumberType_Int32); }
 	}
 	
 	property int m_collisionGroup
 	{
 		public get() { return LoadFromAddress(this.Address + offsets.ctfsoffsets.m_collisionGroup, NumberType_Int32); }
-		public set(int _collisiongroup) { StoreToAddress(this.Address + offsets.ctfsoffsets.m_collisionGroup, _collisiongroup, NumberType_Int32); }
+		public set(int _collisiongroup) { StoreToAddressCustom(this.Address + offsets.ctfsoffsets.m_collisionGroup, _collisiongroup, NumberType_Int32); }
 	}
 	
 	property Address m_pExtraShouldHitCheckFunction
 	{
 		public get() { return view_as<Address>(LoadFromAddress(this.Address + offsets.ctfsoffsets.m_pExtraShouldHitCheckFunction, NumberType_Int32)); }
-		public set(Address _checkfnc) { StoreToAddress(this.Address + offsets.ctfsoffsets.m_pExtraShouldHitCheckFunction, view_as<int>(_checkfnc), NumberType_Int32); }
+		public set(Address _checkfnc) { StoreToAddressCustom(this.Address + offsets.ctfsoffsets.m_pExtraShouldHitCheckFunction, view_as<int>(_checkfnc), NumberType_Int32); }
 	}
 	
 	public CTraceFilterSimple()

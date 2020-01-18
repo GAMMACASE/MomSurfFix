@@ -67,7 +67,7 @@ methodmap CGameMovement < AddressBase
 	property int m_nTraceCount
 	{
 		public get() { return LoadFromAddress(this.Address + offsets.cgmoffsets.m_nTraceCount, NumberType_Int32); }
-		public set(int _tracecount) { StoreToAddress(this.Address + offsets.cgmoffsets.m_nTraceCount, _tracecount, NumberType_Int32); }
+		public set(int _tracecount) { StoreToAddressCustom(this.Address + offsets.cgmoffsets.m_nTraceCount, _tracecount, NumberType_Int32); }
 	}
 }
 
