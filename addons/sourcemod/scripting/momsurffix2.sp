@@ -12,7 +12,7 @@ public Plugin myinfo = {
     name = "Momentum surf fix \'2",
     author = "GAMMA CASE",
     description = "Ported surf fix from momentum mod.",
-    version = "1.1.0",
+    version = "1.1.1",
     url = "http://steamcommunity.com/id/_GAMMACASE_/"
 };
 
