@@ -334,12 +334,12 @@ int TryPlayerMove(CGameMovement pThis, Vector pFirstDest, CGameTrace pFirstTrace
 				alloced_vector.ToArray(valid_plane);
 			}
 			//TODO: should be replaced with normal solution!! Currently hack to fix issue #1.
-			else if(!gNoclipWorkAround.BoolValue || (vecVelocity.z < -6.25 && vecVelocity.z > 0.0))
+			else if(!gNoclipWorkAround.BoolValue || (vecVelocity.z < -6.25 || vecVelocity.z > 0.0))
 			{
 				//Quite heavy part of the code, should not be triggered much or else it'll impact performance by a lot!!!
 				float offsets[3];
-				offsets[0] = (bumpcount * 2.0) * -gRampInitialRetraceLength.FloatValue;
-				offsets[2] = (bumpcount * 2.0) * gRampInitialRetraceLength.FloatValue;
+				offsets[0] = (float(bumpcount) * 2.0) * -gRampInitialRetraceLength.FloatValue;
+				offsets[2] = (float(bumpcount) * 2.0) * gRampInitialRetraceLength.FloatValue;
 				int valid_planes = 0;
 				
 				VectorCopy(view_as<float>({0.0, 0.0, 0.0}), valid_plane);
@@ -378,22 +378,26 @@ int TryPlayerMove(CGameMovement pThis, Vector pFirstDest, CGameTrace pFirstTrace
 							PROF_STOP(0);
 							
 							PROF_START();
+							AddVectors(fixed_origin, offset, buff);
+							SubtractVectors(end, offset, offset);
 							if(gEngineVersion == Engine_CSGO)
-								ray.Init((AddVectors(fixed_origin, offset, buff), buff), (SubtractVectors(end, offset, offset), offset),
-										(SubtractVectors(VectorToArray(GetPlayerMins(pThis)), offset_mins, offset_mins), offset_mins), 
-										(AddVectors(VectorToArray(GetPlayerMaxs(pThis)), offset_maxs, offset_maxs), offset_maxs));
+							{
+								SubtractVectors(VectorToArray(GetPlayerMins(pThis)), offset_mins, offset_mins); 
+								AddVectors(VectorToArray(GetPlayerMaxs(pThis)), offset_maxs, offset_maxs);
+							}
 							else
-								ray.Init((AddVectors(fixed_origin, offset, buff), buff), (SubtractVectors(end, offset, offset), offset),
-										(SubtractVectors(VectorToArray(GetPlayerMinsCSS(pThis, alloced_vector)), offset_mins, offset_mins), offset_mins), 
-										(AddVectors(VectorToArray(GetPlayerMaxsCSS(pThis, alloced_vector2)), offset_maxs, offset_maxs), offset_maxs));
+							{
+								SubtractVectors(VectorToArray(GetPlayerMinsCSS(pThis, alloced_vector)), offset_mins, offset_mins); 
+								AddVectors(VectorToArray(GetPlayerMaxsCSS(pThis, alloced_vector2)), offset_maxs, offset_maxs);
+							}
 							PROF_STOP(1);
 							
 							PROF_START();
-							UTIL_TraceRay(ray, MASK_PLAYERSOLID, pThis, COLLISION_GROUP_PLAYER_MOVEMENT, pm);
+							ray.Init(buff, offset, offset_mins, offset_maxs);
 							PROF_STOP(2);
 							
 							PROF_START();
-							pm.plane.normal.FromArray(vec3_origin);
+							UTIL_TraceRay(ray, MASK_PLAYERSOLID, pThis, COLLISION_GROUP_PLAYER_MOVEMENT, pm);
 							PROF_STOP(3);
 							
 							PROF_START();
@@ -403,7 +407,7 @@ int TryPlayerMove(CGameMovement pThis, Vector pFirstDest, CGameTrace pFirstTrace
 								FloatAbs(plane_normal.z) <= 1.0 && pm.fraction > 0.0 && pm.fraction < 1.0 && !pm.startsolid)
 							{
 								valid_planes++;
-								plane_normal.ToArray(valid_plane);
+								AddVectors(valid_plane, VectorToArray(plane_normal), valid_plane);
 							}
 							PROF_STOP(4);
 						}
@@ -411,10 +415,10 @@ int TryPlayerMove(CGameMovement pThis, Vector pFirstDest, CGameTrace pFirstTrace
 				}
 				ray.Free();
 				
-				if(valid_planes > 0 && !CloseEnough(valid_plane, view_as<float>({0.0, 0.0, 0.0})))
+				if(valid_planes != 0 && !CloseEnough(valid_plane, view_as<float>({0.0, 0.0, 0.0})))
 				{
 					has_valid_plane = true;
-					VectorNormalize(valid_plane);
+					NormalizeVector(valid_plane, valid_plane);
 					continue;
 				}
 			}
@@ -448,7 +452,9 @@ int TryPlayerMove(CGameMovement pThis, Vector pFirstDest, CGameTrace pFirstTrace
 				pm.plane.normal.FromArray(valid_plane);
 			}
 			else
+			{
 				TracePlayerBBox(pThis, vecAbsOrigin, alloced_vector2, MASK_PLAYERSOLID, COLLISION_GROUP_PLAYER_MOVEMENT, pm);
+			}
 		}
 		
 		if(bumpcount > 0 && pThis.player.m_hGroundEntity == view_as<Address>(-1) && !IsValidMovementTrace(pThis, pm))
@@ -584,7 +590,7 @@ int TryPlayerMove(CGameMovement pThis, Vector pFirstDest, CGameTrace pFirstTrace
 				}
 				
 				GetVectorCrossProduct(planes[0], planes[1], dir);
-				VectorNormalize(dir);
+				NormalizeVector(dir, dir);
 				
 				d = vecVelocity.Dot(dir);
 				
@@ -613,17 +619,6 @@ stock void VectorMA(float start[3], float scale, float dir[3], float dest[3])
 	dest[0] = start[0] + dir[0] * scale;
 	dest[1] = start[1] + dir[1] * scale;
 	dest[2] = start[2] + dir[2] * scale;
-}
-
-stock float VectorNormalize(float vec[3])
-{
-	float iradius = 1.0 / ( SquareRoot(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]) + FLT_EPSILON);
-	
-	vec[0] *= iradius;
-	vec[1] *= iradius;
-	vec[2] *= iradius;
-	
-	return iradius;
 }
 
 stock void VectorCopy(float from[3], float to[3])
