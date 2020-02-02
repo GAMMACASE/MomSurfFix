@@ -220,7 +220,7 @@ methodmap Ray_t < AllocatableBase
 	property Address m_pWorldAxisTransform
 	{
 		public get() { return view_as<Address>(LoadFromAddress(this.Address + offsets.rtoffsets.m_pWorldAxisTransform, NumberType_Int32)); }
-		public set(Address _worldaxistransform) { StoreToAddress(this.Address + offsets.rtoffsets.m_pWorldAxisTransform, view_as<int>(_worldaxistransform), NumberType_Int8); }
+		public set(Address _worldaxistransform) { StoreToAddress(this.Address + offsets.rtoffsets.m_pWorldAxisTransform, view_as<int>(_worldaxistransform), NumberType_Int32); }
 	}
 	
 	property bool m_IsRay
