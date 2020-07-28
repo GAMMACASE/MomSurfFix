@@ -1,8 +1,7 @@
-#if defined _memutils_include
+#if defined _memutils_included
 #endinput
-#else
-#define _memutils_include
 #endif
+#define _memutils_included
 
 #if !defined SNAME
 #define __SNAME ""
@@ -10,7 +9,7 @@
 #define __SNAME SNAME
 #endif
 
-#define MEM_LEN_SAFE_THRESHOLD 1000
+#define MEM_LEN_SAFE_THRESHOLD 2000
 
 //-==ASSERTS
 #define ASSERT_FMT_STRING_LEN 512
@@ -154,14 +153,15 @@ methodmap PatchHandler
 	
 	public void Restore()
 	{
-		ASSERT(gPatchStack);
+		if(!gPatchStack)
+			return;
 		
 		char buff[32];
 		IntToString(this.Any, buff, sizeof(buff));
 		
 		int arrSize[1];
-		gPatchStack.GetArray(buff, arrSize, sizeof(arrSize));
-		ASSERT(arrSize[0] > 0 && arrSize[0] < MEM_LEN_SAFE_THRESHOLD);
+		if(!gPatchStack.GetArray(buff, arrSize, sizeof(arrSize)))
+			return;
 		
 		int[] arr = new int[arrSize[0]];
 		gPatchStack.GetArray(buff, arr, arrSize[0]);
@@ -174,29 +174,56 @@ methodmap PatchHandler
 			delete gPatchStack;
 	}
 }
+
+public void OnPluginEnd()
+{
+	if(gPatchStack)
+	{
+		StringMapSnapshot sms = gPatchStack.Snapshot();
+		char buff[32];
+		Address addr;
+		
+		for(int i = 0; i < sms.Length; i++)
+		{
+			sms.GetKey(i, buff, sizeof(buff));
+			addr = view_as<Address>(StringToInt(buff));
+			view_as<PatchHandler>(addr).Restore();
+		}
+	}
+	
+#if !defined MEMUTILS_NOPLENDCALL
+	OnPluginEnd_MemUtilsRedefined();
+#endif
+}
+#undef OnPluginEnd
+#define OnPluginEnd OnPluginEnd_MemUtilsRedefined
 //PatchHandling methodmap==-
 
 //-==Other util functions
 stock void DumpOnAddress(Address addr, int len, int columns = 10)
 {
-	char buff[128];
+	char buff[128], buff2[128];
 	
 	ASSERT(addr != Address_Null);
 	ASSERT(len > 0 && len < MEM_LEN_SAFE_THRESHOLD);
 	
 	Format(buff, sizeof(buff), "[0x%08X]", addr);
+	char chr;
 	for(int i = 0; i < len; i++)
 	{
-		Format(buff, sizeof(buff), "%s %02X", buff, LoadFromAddress(addr + i, NumberType_Int8));
+		chr = LoadFromAddress(addr + i, NumberType_Int8);
+		Format(buff, sizeof(buff), "%s %02X", buff, chr);
+		Format(buff2, sizeof(buff2), "%s%c", buff2, (chr > ' ' && chr != 0x7F && chr != 0xFF ? chr : '.'));
 		if(i % columns == columns - 1)
 		{
-			PrintToServer(__SNAME..."%s", buff);
+			PrintToServer(__SNAME..."%s %s", buff, buff2);
 			Format(buff, sizeof(buff), "[0x%08X]", addr + i);
+			buff2[0] = '\0';
 		}
 	}
 	
 	if((len - 1) % columns != columns - 1)
-		PrintToServer(__SNAME..."%s", buff);
+		PrintToServer(__SNAME..."%s %s", buff, buff2);
 }
 
 //NO OVERLAPPING!!
@@ -247,3 +274,5 @@ stock void PatchArea(Address addr, int len, char byte = 0x90)
 		StoreToAddress(addr + i, byte, NumberType_Int8);
 }
 //Other util functions==-
+
+#undef MEM_LEN_SAFE_THRESHOLD

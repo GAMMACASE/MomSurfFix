@@ -12,7 +12,7 @@ public Plugin myinfo = {
     name = "Momentum surf fix \'2",
     author = "GAMMA CASE",
     description = "Ported surf fix from momentum mod.",
-    version = "1.1.2",
+    version = "1.1.3",
     url = "http://steamcommunity.com/id/_GAMMACASE_/"
 };
 
@@ -118,8 +118,6 @@ public void OnMapStart()
 public void OnPluginEnd()
 {
 	CleanUpUtils();
-	if(gASMPatch.Address != Address_Null)
-		gASMPatch.Restore();
 }
 
 #if defined DEBUG_MEMTEST

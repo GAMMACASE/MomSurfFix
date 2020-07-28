@@ -109,7 +109,8 @@
 			"CEntInfo::size"					"16"
 			
 			//CBasePlayer
-			"CBasePlayer::m_surfaceFriction"	"3832"
+			//Offset is relative to m_szLastPlaceName netprop and will be added to it
+			"CBasePlayer::m_surfaceFriction"	"104"
 			
 			//Ray_t
 			"Ray_t::m_Start"					"0"
@@ -299,9 +300,10 @@
 			"CMoveData::m_vecVelocity"			"64"
 			//...
 			"CMoveData::m_vecAbsOrigin"			"172"
-		
+			
 			//CBasePlayer
-			"CBasePlayer::m_surfaceFriction"	"4660"
+			//Offset is relative to m_ubEFNoInterpParity netprop and will be substracted from it
+			"CBasePlayer::m_surfaceFriction"	"8"
 			
 			//Ray_t
 			"Ray_t::m_Start"					"0"

@@ -136,11 +136,23 @@ stock bool InitBasePlayer(GameData gd)
 		//CBaseHandle
 		ASSERT_FMT(gd.GetKeyValue("CBaseHandle::m_Index", buff, sizeof(buff)), "Can't get \"CBaseHandle::m_Index\" offset from gamedata.");
 		offsets.cbhoffsets.m_Index = StringToInt(buff);
+		
+		//CBasePlayer
+		ASSERT_FMT(gd.GetKeyValue("CBasePlayer::m_surfaceFriction", buff, sizeof(buff)), "Can't get \"CBasePlayer::m_surfaceFriction\" offset from gamedata.");
+		int offs = StringToInt(buff);
+		int prop_offs = FindSendPropInfo("CBasePlayer", "m_szLastPlaceName");
+		ASSERT_FMT(prop_offs > 0, "Can't get \"CBasePlayer::m_szLastPlaceName\" offset from FindSendPropInfo().");
+		offsets.cbpoffsets.m_surfaceFriction = prop_offs + offs;
 	}
-	
-	//CBasePlayer
-	ASSERT_FMT(gd.GetKeyValue("CBasePlayer::m_surfaceFriction", buff, sizeof(buff)), "Can't get \"CBasePlayer::m_surfaceFriction\" offset from gamedata.");
-	offsets.cbpoffsets.m_surfaceFriction = StringToInt(buff);
+	else if(gEngineVersion == Engine_CSGO)
+	{
+		//CBasePlayer
+		ASSERT_FMT(gd.GetKeyValue("CBasePlayer::m_surfaceFriction", buff, sizeof(buff)), "Can't get \"CBasePlayer::m_surfaceFriction\" offset from gamedata.");
+		int offs = StringToInt(buff);
+		int prop_offs = FindSendPropInfo("CBasePlayer", "m_ubEFNoInterpParity");
+		ASSERT_FMT(prop_offs > 0, "Can't get \"CBasePlayer::m_ubEFNoInterpParity\" offset from FindSendPropInfo().");
+		offsets.cbpoffsets.m_surfaceFriction = prop_offs - offs;
+	}
 	
 	offsets.cbpoffsets.m_hGroundEntity = FindSendPropInfo("CBasePlayer", "m_hGroundEntity");
 	ASSERT_FMT(offsets.cbpoffsets.m_hGroundEntity > 0, "Can't get \"CBasePlayer::m_hGroundEntity\" offset from FindSendPropInfo().");
