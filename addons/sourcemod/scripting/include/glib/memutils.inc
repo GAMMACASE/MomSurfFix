@@ -9,6 +9,10 @@
 #define __SNAME SNAME
 #endif
 
+/* Compile time settings for this include. Should be defined before including this file.
+*  #define MEMUTILS_PLUGINENDCALL //This should be defined if main plugin has OnPluginEnd() forward used.
+*/
+
 #define MEM_LEN_SAFE_THRESHOLD 2000
 
 //-==ASSERTS
@@ -31,6 +35,7 @@
 #define ASSERT_FINAL_MSG(%1,%2) ASSERT_MSG(%1,%2)
 #endif
 
+//Might be redundant as default ASSERT_MSG accept format arguments just fine.
 stock void ASSERT_FMT(bool result, char[] fmt, any ...)
 {
 #if !defined DISABLE_ASSERTION
@@ -43,7 +48,7 @@ stock void ASSERT_FMT(bool result, char[] fmt, any ...)
 	}
 #endif
 }
-//ASSERS END==-
+//ASSERTS END==-
 
 //-==Operator overloadings
 stock Address operator+(Address l, int r)
@@ -191,12 +196,17 @@ public void OnPluginEnd()
 		}
 	}
 	
-#if !defined MEMUTILS_NOPLENDCALL
+#if defined MEMUTILS_PLUGINENDCALL
 	OnPluginEnd_MemUtilsRedefined();
 #endif
 }
 #undef OnPluginEnd
+#if defined MEMUTILS_PLUGINENDCALL
 #define OnPluginEnd OnPluginEnd_MemUtilsRedefined
+#else
+#define OnPluginEnd OnPluginEnd_Redifined(){}\
+void MEMUTILS_INCLUDE_WARNING_OnPluginEnd_REDIFINITION
+#endif
 //PatchHandling methodmap==-
 
 //-==Other util functions

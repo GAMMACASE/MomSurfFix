@@ -12,14 +12,14 @@ public Plugin myinfo = {
     name = "Momentum surf fix \'2",
     author = "GAMMA CASE",
     description = "Ported surf fix from momentum mod.",
-    version = "1.1.3",
+    version = "1.1.4",
     url = "http://steamcommunity.com/id/_GAMMACASE_/"
 };
 
 #define FLT_EPSILON 1.192092896e-07
 #define MAX_CLIP_PLANES 5
 
-#define ASM_PATCH_LEN 24
+#define ASM_PATCH_LEN 17
 #define ASM_START_OFFSET 100
 
 enum OSType
@@ -34,7 +34,10 @@ EngineVersion gEngineVersion;
 
 #define CUSTOM_ASSERTION_FAILSTATE
 #define FAILSTATE_FUNC SetFailStateCustom
+#define MEMUTILS_PLUGINENDCALL
 #include "glib/memutils"
+#undef MEMUTILS_PLUGINENDCALL
+
 #include "momsurffix/utils.sp"
 #include "momsurffix/baseplayer.sp"
 #include "momsurffix/gametrace.sp"
@@ -723,8 +726,15 @@ stock void StoreToAddressFast(Address addr, any data)
 
 stock void StoreToAddressCustom(Address addr, any data, NumberType type)
 {
+	// Not allowing null to be passed here...
+	ASSERT(addr != Address_Null);
+	
 	if(gASMOptimizations.BoolValue && gStoreToAddressFast)
+	{
+		//Ignore number types other than 32 bits, as StoreToAddressFast() is writing only to 32 bit buffer.
+		ASSERT_MSG(type == NumberType_Int32, "Only NumberType_Int32 is accepted in StoreToAddressCustom().");
 		StoreToAddressFast(addr, data);
+	}
 	else
 		StoreToAddress(addr, view_as<int>(data), type);
 }
