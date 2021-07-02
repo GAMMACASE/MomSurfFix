@@ -140,12 +140,12 @@
 				"windows"
 				{
 					"signature"	"CGameMovement::TracePlayerBBox"
-					"read" "83"
+					"read" "82"
 				}
 				"linux"
 				{
 					"signature"	"CGameMovement::TracePlayerBBox"
-					"read"	"579"
+					"read"	"598"
 				}
 			}
 			
