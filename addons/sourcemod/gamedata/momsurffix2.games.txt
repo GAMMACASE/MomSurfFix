@@ -35,9 +35,6 @@
 			"CGameTrace::surface"				"60"
 			"CGameTrace::hitgroup"				"68"
 			"CGameTrace::physicsbone"			"72"
-			"CGameTrace::m_pEnt"				"74"
-			"CGameTrace::hitbox"				"80"
-			"CGameTrace::size"					"84"
 			
 			//CTraceFilterSimple
 			"CTraceFilterSimple::vptr"								"0"
@@ -95,6 +92,11 @@
 			"CMoveData::m_vecVelocity"			"64"
 			//...
 			"CMoveData::m_vecAbsOrigin"			"152"
+			
+			//CGameTrace
+			"CGameTrace::m_pEnt"				"74"
+			"CGameTrace::hitbox"				"80"
+			"CGameTrace::size"					"84"
 			
 			//CBaseHandle
 			"CBaseHandle::m_Index"				"0"
@@ -300,6 +302,11 @@
 			"CMoveData::m_vecVelocity"			"64"
 			//...
 			"CMoveData::m_vecAbsOrigin"			"172"
+			
+			//CGameTrace
+			"CGameTrace::m_pEnt"				"76"
+			"CGameTrace::hitbox"				"82"
+			"CGameTrace::size"					"86"
 			
 			//CBasePlayer
 			//Offset is relative to m_ubEFNoInterpParity netprop and will be substracted from it
