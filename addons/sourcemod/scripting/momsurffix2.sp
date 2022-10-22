@@ -310,7 +310,13 @@ int TryPlayerMove(CGameMovement pThis, Vector pFirstDest, CGameTrace pFirstTrace
 				VectorCopy(view_as<float>({0.0, 0.0, 0.0}), valid_plane);
 				
 				float offset[3], offset_mins[3], offset_maxs[3], buff[3];
-				Ray_t ray = Ray_t();
+				static Ray_t ray;
+				
+				// Keep this variable allocated only once
+				// since ray.Init should take care of removing any left garbage values
+				if(ray.Address == Address_Null)
+					ray = Ray_t();
+				
 				for(i = 0; i < 3; i++)
 				{
 					for(j = 0; j < 3; j++)
@@ -378,7 +384,6 @@ int TryPlayerMove(CGameMovement pThis, Vector pFirstDest, CGameTrace pFirstTrace
 						}
 					}
 				}
-				ray.Free();
 				
 				if(valid_planes != 0 && !CloseEnough(valid_plane, view_as<float>({0.0, 0.0, 0.0})))
 				{
