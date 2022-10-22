@@ -12,7 +12,7 @@ public Plugin myinfo = {
     name = "Momentum surf fix \'2",
     author = "GAMMA CASE",
     description = "Ported surf fix from momentum mod.",
-    version = "1.1.4",
+    version = "1.1.5",
     url = "http://steamcommunity.com/id/_GAMMACASE_/"
 };
 
@@ -46,28 +46,34 @@ EngineVersion gEngineVersion;
 ConVar gRampBumpCount,
 	gBounce,
 	gRampInitialRetraceLength,
-	gASMOptimizations,
 	gNoclipWorkAround;
 
 float vec3_origin[3] = {0.0, 0.0, 0.0};
 bool gBasePlayerLoadedTooEarly;
 
-PatchHandler gASMPatch;
-Handle gStoreToAddressFast;
-Address gTryPlayerMoveStart;
+#define DEBUG_PROFILE
 
 #if defined DEBUG_PROFILE
 #include "profiler"
-#define PROF_START() if(gProf) gProf.Start()
-#define PROF_STOP(%1)%2; if(gProf)\
-{\
-	gProf.Stop();\
-	Prof_Check(%1);\
-}
-
 Profiler gProf;
 ArrayList gProfData;
 float gProfTime;
+
+void PROF_START()
+{
+	if(gProf)
+		gProf.Start();
+}
+
+void PROF_STOP(int idx)
+{
+	if(gProf)
+	{
+		gProf.Stop();
+		Prof_Check(idx);
+	}
+}
+
 #else
 #define PROF_START%1;
 #define PROF_STOP%1;
@@ -84,7 +90,6 @@ public void OnPluginStart()
 	
 	gRampBumpCount = CreateConVar("momsurffix_ramp_bumpcount", "8", "Helps with fixing surf/ramp bugs", .hasMin = true, .min = 4.0, .hasMax = true, .max = 16.0);
 	gRampInitialRetraceLength = CreateConVar("momsurffix_ramp_initial_retrace_length", "0.2", "Amount of units used in offset for retraces", .hasMin = true, .min = 0.2, .hasMax = true, .max = 5.0);
-	gASMOptimizations = CreateConVar("momsurffix_enable_asm_optimizations", "1", "Enables ASM optimizations, that may improve performance of the plugin", .hasMin = true, .min = 0.0, .hasMax = true, .max = 1.0);
 	gNoclipWorkAround = CreateConVar("momsurffix_enable_noclip_workaround", "1", "Enables workaround to prevent issue #1, can actually help if momsuffix_enable_asm_optimizations is 0", .hasMin = true, .min = 0.0, .hasMax = true, .max = 1.0);
 	gBounce = FindConVar("sv_bounce");
 	ASSERT_MSG(gBounce, "\"sv_bounce\" convar wasn't found!");
@@ -102,7 +107,6 @@ public void OnPluginStart()
 	InitGameMovement(gd);
 	
 	SetupDhooks(gd);
-	SetupASMOptimizations(gd);
 	
 	delete gd;
 }
@@ -147,7 +151,7 @@ public Action SM_Prof(int client, int args)
 	
 	if(gProfTime <= 0.1)
 	{
-		ReplyToCommand(client, SNAME..."Time should be higher then 0.1 seconds.")
+		ReplyToCommand(client, SNAME..."Time should be higher then 0.1 seconds.");
 		return Plugin_Handled;
 	}
 	
@@ -189,50 +193,10 @@ public Action Prof_Check_Timer(Handle timer, int client)
 	
 	delete gProf;
 	delete gProfData;
+	
+	return Plugin_Handled;
 }
 #endif
-
-void SetupASMOptimizations(GameData gd)
-{
-	//CGameMovement::TryPlayerMove_Start
-	gTryPlayerMoveStart = gd.GetAddress("CGameMovement::TryPlayerMove_Start");
-	ASSERT_MSG(gTryPlayerMoveStart, "Can't find start of the \"CGameMovement::TryPlayerMove\" function.");
-	
-	gASMPatch = PatchHandler(gTryPlayerMoveStart + ASM_START_OFFSET);
-	gASMPatch.Save(ASM_PATCH_LEN);
-	
-	Address start = gASMPatch.Address;
-	
-	/*StoreToAddressFast asm:
-	*	push ebp
-	*	mov ebp, esp
-	*	
-	*	mov eax, [ebp + 12]
-	*	mov ecx, [ebp + 8]
-	*	mov [ecx], eax
-	*	
-	*	mov esp, ebp
-	*	pop ebp
-	*	ret 8
-	*/
-	
-	StoreToAddress(start, 0x8B_EC_8B_55, NumberType_Int32);
-	StoreToAddress(start + 4, 0x4D_8B_0C_45, NumberType_Int32);
-	StoreToAddress(start + 8, 0x8B_01_89_08, NumberType_Int32);
-	StoreToAddress(start + 12, 0x08_C2_5D_E5, NumberType_Int32);
-	StoreToAddress(start + 16, 0x00, NumberType_Int8);
-	
-	//StoreToAddressFast
-	StartPrepSDKCall(SDKCall_Static);
-	
-	PrepSDKCall_SetAddress(start);
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
-	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
-	
-	gStoreToAddressFast = EndPrepSDKCall();
-	ASSERT(gStoreToAddressFast);
-}
 
 void ValidateGameAndOS(GameData gd)
 {
@@ -655,7 +619,7 @@ stock bool CloseEnoughFloat(float a, float b, float eps = FLT_EPSILON)
 
 public void SetFailStateCustom(const char[] fmt, any ...)
 {
-	char buff[ASSERT_FMT_STRING_LEN];
+	char buff[512];
 	VFormat(buff, sizeof(buff), fmt, 2);
 	
 	CleanUpUtils();
@@ -677,7 +641,7 @@ stock bool IsValidMovementTrace(CGameMovement pThis, CGameTrace tr)
 	
 	CGameTrace stuck = CGameTrace();
 	
-	TracePlayerBBox(pThis, tr.endpos, tr.endpos, MASK_PLAYERSOLID, COLLISION_GROUP_PLAYER_MOVEMENT, stuck)
+	TracePlayerBBox(pThis, tr.endpos, tr.endpos, MASK_PLAYERSOLID, COLLISION_GROUP_PLAYER_MOVEMENT, stuck);
 	if(stuck.startsolid || !CloseEnoughFloat(stuck.fraction, 1.0))
 	{
 		stuck.Free();
@@ -713,28 +677,4 @@ stock void UTIL_TraceRay(Ray_t ray, int mask, CGameMovement gm, int collisionGro
 		
 		filter.Free();
 	}
-}
-
-//Faster then native StoreToAddress by ~45 times.
-stock void StoreToAddressFast(Address addr, any data)
-{
-	ASSERT(gStoreToAddressFast);
-	
-	int ret = SDKCall(gStoreToAddressFast, addr, data);
-	ASSERT(ret == data);
-}
-
-stock void StoreToAddressCustom(Address addr, any data, NumberType type)
-{
-	// Not allowing null to be passed here...
-	ASSERT(addr != Address_Null);
-	
-	if(gASMOptimizations.BoolValue && gStoreToAddressFast)
-	{
-		//Ignore number types other than 32 bits, as StoreToAddressFast() is writing only to 32 bit buffer.
-		ASSERT_MSG(type == NumberType_Int32, "Only NumberType_Int32 is accepted in StoreToAddressCustom().");
-		StoreToAddressFast(addr, data);
-	}
-	else
-		StoreToAddress(addr, view_as<int>(data), type);
 }

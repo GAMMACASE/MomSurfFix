@@ -7,14 +7,6 @@ enum struct MemoryPoolEntry
 	char name[MEMORYPOOL_NAME_MAX];
 }
 
-methodmap AddressBase
-{
-	property Address Address
-	{
-		public get() { return view_as<Address>(this); }
-	}
-}
-
 methodmap AllocatableBase < AddressBase
 {
 	public static Address _malloc(int size, const char[] name)
@@ -71,19 +63,19 @@ methodmap Vector < AllocatableBase
 	
 	property float x
 	{
-		public set(float _x) { StoreToAddressCustom(this.Address, view_as<int>(_x), NumberType_Int32); }
+		public set(float _x) { StoreToAddress(this.Address, view_as<int>(_x), NumberType_Int32, false); }
 		public get() { return view_as<float>(LoadFromAddress(this.Address, NumberType_Int32)); }
 	}
 	
 	property float y
 	{
-		public set(float _y) { StoreToAddressCustom(this.Address + 4, view_as<int>(_y), NumberType_Int32); }
+		public set(float _y) { StoreToAddress(this.Address + 4, view_as<int>(_y), NumberType_Int32, false); }
 		public get() { return view_as<float>(LoadFromAddress(this.Address + 4, NumberType_Int32)); }
 	}
 	
 	property float z
 	{
-		public set(float _z) { StoreToAddressCustom(this.Address + 8, view_as<int>(_z), NumberType_Int32); }
+		public set(float _z) { StoreToAddress(this.Address + 8, view_as<int>(_z), NumberType_Int32, false); }
 		public get() { return view_as<float>(LoadFromAddress(this.Address + 8, NumberType_Int32)); }
 	}
 	
