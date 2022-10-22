@@ -156,7 +156,7 @@ stock void InitGameMovement(GameData gd)
 		//CMoveHelperServer::CMoveHelperServer
 		Handle dhook = DHookCreateDetour(Address_Null, CallConv_CDECL, ReturnType_Int, ThisPointer_Ignore);
 		ASSERT_MSG(DHookSetFromConf(dhook, gd, SDKConf_Signature, "CMoveHelperServer::CMoveHelperServer"), "Failed to get \"CMoveHelperServer::CMoveHelperServer\" signature.");
-		DHookAddParam(dhook, HookParamType_Int, .flag = DHookPass_ByRef);
+		DHookAddParam(dhook, HookParamType_Int);
 		DHookEnableDetour(dhook, true, CMoveHelperServer_Dhook);
 	}
 	

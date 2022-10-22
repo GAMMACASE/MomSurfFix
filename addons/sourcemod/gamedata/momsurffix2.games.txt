@@ -347,7 +347,7 @@
 				"windows"
 				{
 					"signature"	"CGameMovement::TryPlayerMove"
-					"read" "700"
+					"read" "718"
 				}
 				"linux"
 				{
