@@ -127,7 +127,7 @@ stock void InitUtils(GameData gd)
 	//CreateInterface
 	StartPrepSDKCall(SDKCall_Static);
 	
-	ASSERT_MSG(PrepSDKCall_SetFromConf(gd, SDKConf_Signature, "CreateInterface"), "Failed to get \"CreateInterface\" signature.");
+	ASSERT_MSG(PrepSDKCall_SetFromConf(gd, SDKConf_Signature, "CreateInterface"), "Failed to get \"CreateInterface\" signature. Gamedata needs an update.");
 	
 	PrepSDKCall_AddParameter(SDKType_String, SDKPass_Pointer);
 	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
@@ -141,7 +141,7 @@ stock void InitUtils(GameData gd)
 	{
 		//g_pMemAlloc
 		g_pMemAlloc = gd.GetAddress("g_pMemAlloc");
-		ASSERT_MSG(g_pMemAlloc != Address_Null, "Can't get \"g_pMemAlloc\" address from gamedata.");
+		ASSERT_MSG(g_pMemAlloc != Address_Null, "Can't get \"g_pMemAlloc\" address from gamedata. Gamedata needs an update.");
 		
 		//Malloc
 		StartPrepSDKCall(SDKCall_Raw);
@@ -168,7 +168,7 @@ stock void InitUtils(GameData gd)
 	{
 		//Malloc
 		StartPrepSDKCall(SDKCall_Static);
-		ASSERT_MSG(PrepSDKCall_SetFromConf(gd, SDKConf_Signature, "malloc"), "Failed to get \"malloc\" signature.");
+		ASSERT_MSG(PrepSDKCall_SetFromConf(gd, SDKConf_Signature, "malloc"), "Failed to get \"malloc\" signature. Gamedata needs an update.");
 		
 		PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
 		PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
@@ -180,7 +180,7 @@ stock void InitUtils(GameData gd)
 		
 		//Free
 		StartPrepSDKCall(SDKCall_Static);
-		ASSERT_MSG(PrepSDKCall_SetFromConf(gd, SDKConf_Signature, "free"), "Failed to get \"free\" signature.");
+		ASSERT_MSG(PrepSDKCall_SetFromConf(gd, SDKConf_Signature, "free"), "Failed to get \"free\" signature. Gamedata needs an update.");
 		
 		PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
 		PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);

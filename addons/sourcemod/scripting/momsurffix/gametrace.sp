@@ -421,7 +421,7 @@ stock void InitGameTrace(GameData gd)
 	if(gEngineVersion == Engine_CSS)
 	{
 		offsets.ctfsoffsets.vtable = gd.GetAddress("CTraceFilterSimple::vtable");
-		ASSERT_MSG(offsets.ctfsoffsets.vtable != Address_Null, "Can't get \"CTraceFilterSimple::vtable\" address from gamedata.");
+		ASSERT_MSG(offsets.ctfsoffsets.vtable != Address_Null, "Can't get \"CTraceFilterSimple::vtable\" address from gamedata. Gamedata needs an update.");
 	}
 	
 	//enginetrace

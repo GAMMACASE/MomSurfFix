@@ -32,8 +32,7 @@ enum OSType
 OSType gOSType;
 EngineVersion gEngineVersion;
 
-#define CUSTOM_ASSERTION_FAILSTATE
-#define FAILSTATE_FUNC SetFailStateCustom
+#define ASSERTUTILS_FAILSTATE_FUNC SetFailStateCustom
 #define MEMUTILS_PLUGINENDCALL
 #include "glib/memutils"
 #undef MEMUTILS_PLUGINENDCALL
@@ -629,7 +628,15 @@ public void SetFailStateCustom(const char[] fmt, any ...)
 	
 	CleanUpUtils();
 	
-	SetFailState(buff);
+	char ostype[32];
+	switch(gOSType)
+	{
+		case OSLinux:	ostype = "LIN";
+		case OSWindows:	ostype = "WIN";
+		default:		ostype = "UNK";
+	}
+	
+	SetFailState("[%s | %i] %s", ostype, gEngineVersion, buff);
 }
 
 stock bool IsValidMovementTrace(CGameMovement pThis, CGameTrace tr)

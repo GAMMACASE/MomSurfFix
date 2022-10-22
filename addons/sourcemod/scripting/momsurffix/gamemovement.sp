@@ -146,7 +146,7 @@ stock void InitGameMovement(GameData gd)
 	{
 		//sm_pSingleton
 		sm_pSingleton = view_as<IMoveHelper>(gd.GetAddress("sm_pSingleton"));
-		ASSERT_MSG(sm_pSingleton.Address != Address_Null, "Can't get \"sm_pSingleton\" address from gamedata.");
+		ASSERT_MSG(sm_pSingleton.Address != Address_Null, "Can't get \"sm_pSingleton\" address from gamedata. Gamedata needs an update.");
 	}
 	else
 	{
@@ -155,7 +155,7 @@ stock void InitGameMovement(GameData gd)
 		
 		//CMoveHelperServer::CMoveHelperServer
 		Handle dhook = DHookCreateDetour(Address_Null, CallConv_CDECL, ReturnType_Int, ThisPointer_Ignore);
-		ASSERT_MSG(DHookSetFromConf(dhook, gd, SDKConf_Signature, "CMoveHelperServer::CMoveHelperServer"), "Failed to get \"CMoveHelperServer::CMoveHelperServer\" signature.");
+		ASSERT_MSG(DHookSetFromConf(dhook, gd, SDKConf_Signature, "CMoveHelperServer::CMoveHelperServer"), "Failed to get \"CMoveHelperServer::CMoveHelperServer\" signature. Gamedata needs an update.");
 		DHookAddParam(dhook, HookParamType_Int);
 		DHookEnableDetour(dhook, true, CMoveHelperServer_Dhook);
 	}
@@ -301,7 +301,7 @@ public MRESReturn CMoveHelperServer_Dhook(Handle hReturn, Handle hParams)
 			GameData gd = new GameData(GAME_DATA_FILE);
 			
 			sm_pSingleton = view_as<IMoveHelper>(gd.GetAddress("sm_pSingleton"));
-			ASSERT_MSG(sm_pSingleton.Address != Address_Null, "Can't get \"sm_pSingleton\" address from gamedata.");
+			ASSERT_MSG(sm_pSingleton.Address != Address_Null, "Can't get \"sm_pSingleton\" address from gamedata. Gamedata needs an update.");
 			
 			delete gd;
 		}
