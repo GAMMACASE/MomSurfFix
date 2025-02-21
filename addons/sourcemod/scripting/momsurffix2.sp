@@ -5,8 +5,8 @@
 
 #define SNAME "[momsurffix2] "
 #define GAME_DATA_FILE "momsurffix2.games"
-//#define DEBUG_PROFILE
-//#define DEBUG_MEMTEST
+// #define DEBUG_PROFILE
+// #define DEBUG_MEMTEST
 
 public Plugin myinfo = {
     name = "Momentum surf fix \'2",
@@ -19,9 +19,6 @@ public Plugin myinfo = {
 #define FLT_EPSILON 1.192092896e-07
 #define MAX_CLIP_PLANES 5
 
-#define ASM_PATCH_LEN 17
-#define ASM_START_OFFSET 100
-
 enum OSType
 {
 	OSUnknown = -1,
@@ -31,6 +28,8 @@ enum OSType
 
 OSType gOSType;
 EngineVersion gEngineVersion;
+
+#define XYZ(%0) %0[0], %0[1], %0[2]
 
 #define ASSERTUTILS_FAILSTATE_FUNC SetFailStateCustom
 #define MEMUTILS_PLUGINENDCALL
@@ -49,8 +48,6 @@ ConVar gRampBumpCount,
 
 float vec3_origin[3] = {0.0, 0.0, 0.0};
 bool gBasePlayerLoadedTooEarly;
-
-#define DEBUG_PROFILE
 
 #if defined DEBUG_PROFILE
 #include "profiler"
@@ -213,6 +210,9 @@ void SetupDhooks(GameData gd)
 	DHookSetFromConf(dhook, gd, SDKConf_Signature, "CGameMovement::TryPlayerMove");
 	DHookAddParam(dhook, HookParamType_Int);
 	DHookAddParam(dhook, HookParamType_Int);
+	
+	if(gEngineVersion == Engine_CSS)
+		DHookAddParam(dhook, HookParamType_Float);
 	
 	ASSERT(DHookEnableDetour(dhook, false, TryPlayerMove_Dhook));
 }

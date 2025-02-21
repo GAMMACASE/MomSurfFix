@@ -73,9 +73,9 @@
 		
 			//CMoveData
 			"CMoveData::m_nPlayerHandle"		"4"
-			"CMoveData::m_vecVelocity"			"64"
+			"CMoveData::m_vecVelocity"			"68"
 			//...
-			"CMoveData::m_vecAbsOrigin"			"152"
+			"CMoveData::m_vecAbsOrigin"			"156"
 			
 			//CGameTrace
 			"CGameTrace::m_pEnt"				"74"
@@ -115,7 +115,7 @@
 				"windows"
 				{
 					"signature" "g_pMemAllocFunc"
-					"read" "253"
+					"read" "14"
 					"read" "0"
 					"read" "0"
 				}
@@ -126,12 +126,12 @@
 				"windows"
 				{
 					"signature"	"CGameMovement::TracePlayerBBox"
-					"read" "82"
+					"read" "94"
 				}
 				"linux"
 				{
 					"signature"	"CGameMovement::TracePlayerBBox"
-					"read"	"598"
+					"read"	"475"
 				}
 			}
 			
@@ -140,12 +140,12 @@
 				"windows"
 				{
 					"signature"	"CGameMovement::TryPlayerMove"
-					"read" "667"
+					"read" "802"
 				}
 				"linux"
 				{
 					"signature"	"CGameMovement::TryPlayerMove"
-					"read"	"536"
+					"read"	"667"
 				}
 				
 				"read" "0"
@@ -171,8 +171,8 @@
 			"CMoveHelperServer::CMoveHelperServer"
 			{
 				"library"		"server"
-				"windows"		"\xA1\x2A\x2A\x2A\x2A\xA8\x01\x75\x2A\x83\xC8\x01\xC7\x05\x2A\x2A\x2A\x2A\x2A\x2A\x2A\x2A\xA3\x2A\x2A\x2A\x2A\xA1\x2A\x2A\x2A\x2A\xC7\x05\x2A\x2A\x2A\x2A\x00\x00\x00\x00"
-				"linux"			"@_ZN17CMoveHelperServerC2Ev"
+				"windows"		"\xA1\x2A\x2A\x2A\x2A\xA8\x2A\x75\x2A\x83\xC8\x2A\xC7\x05\x2A\x2A\x2A\x2A\x2A\x2A\x2A\x2A\x68\x2A\x2A\x2A\x2A\xA3\x2A\x2A\x2A\x2A\xC7\x05\x2A\x2A\x2A\x2A\x2A\x2A\x2A\x2A\xC7\x05\x2A\x2A\x2A\x2A\x2A\x2A\x2A\x2A\xC7\x05\x2A\x2A\x2A\x2A\x2A\x2A\x2A\x2A\xE8"
+				"linux"			"@_Z16MoveHelperServerv"
 			}
 			
 			"CTraceFilterSimple::CTraceFilterSimple"
@@ -192,20 +192,20 @@
 			"CGameMovement::TryPlayerMove"
 			{
 				"library"		"server"
-				"windows"		"\x55\x8B\xEC\x81\xEC\x20\x01\x00\x00\xF3\x0F\x10\x1D\x2A\x2A\x2A\x2A"
-				"linux"			"@_ZN13CGameMovement13TryPlayerMoveEP6VectorP10CGameTrace"
+				"windows"		"\x55\x8B\xEC\x81\xEC\x2A\x2A\x2A\x2A\x56\x57\x33\xC0"
+				"linux"			"@_ZN13CGameMovement13TryPlayerMoveEP6VectorP10CGameTracef"
 			}
 			
 			"g_pMemAllocFunc"
 			{
 				"library"		"server"
-				"windows"		"\x55\x8B\xEC\x83\xEC\x20\x8B\x45\x08\xB9\x2A\x2A\x2A\x2A"
+				"windows"		"\x55\x8B\xEC\x53\x56\x8B\xF1\x8B\x16"
 			}
 			
 			"CGameMovement::ClipVelocity"
 			{
 				"library"		"server"
-				"linux"			"@_ZN13CGameMovement12ClipVelocityER6VectorS1_S1_f"
+				"linux"			"@_ZN13CGameMovement12ClipVelocityER6VectorS1_S1_ff"
 			}
 			
 			"CGameMovement::GetPlayerMaxs"

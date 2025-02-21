@@ -184,6 +184,11 @@ stock void InitGameMovement(GameData gd)
 		PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
 		PrepSDKCall_AddParameter(SDKType_Float, SDKPass_Plain);
 		
+		if(gEngineVersion == Engine_CSS)
+		{
+			PrepSDKCall_AddParameter(SDKType_Float, SDKPass_Plain);
+		}
+		
 		PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
 		
 		gClipVelocity = EndPrepSDKCall();
@@ -341,7 +346,7 @@ stock int ClipVelocity(CGameMovement pThis, Vector invec, Vector normal, Vector 
 	}
 	else if (gEngineVersion == Engine_CSS && gOSType == OSLinux)
 	{
-		return SDKCall(gClipVelocity, pThis.Address, invec.Address, normal.Address, out.Address, overbounce);
+		return SDKCall(gClipVelocity, pThis.Address, invec.Address, normal.Address, out.Address, overbounce, 0.0);
 	}
 	else
 	{
