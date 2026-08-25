@@ -140,7 +140,7 @@
 				"windows"
 				{
 					"signature"	"CGameMovement::TryPlayerMove"
-					"read" "802"
+					"read" "793"
 				}
 				"linux"
 				{
