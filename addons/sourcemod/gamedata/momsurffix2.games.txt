@@ -211,13 +211,13 @@
 			"CGameMovement::GetPlayerMaxs"
 			{
 				"library"		"server"
-				"linux"			"@_ZNK13CGameMovement13GetPlayerMaxsEb"
+				"linux"			"@_ZNK13CGameMovement13GetPlayerMaxsEv"
 			}
 			
 			"CGameMovement::GetPlayerMins"
 			{
 				"library"		"server"
-				"linux"			"@_ZNK13CGameMovement13GetPlayerMinsEb"
+				"linux"			"@_ZNK13CGameMovement13GetPlayerMinsEv"
 			}
 			
 			"malloc"

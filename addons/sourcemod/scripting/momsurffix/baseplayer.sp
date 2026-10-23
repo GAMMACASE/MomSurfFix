@@ -1,7 +1,10 @@
 #define	MAX_EDICT_BITS			11
-#define NUM_ENT_ENTRY_BITS		(MAX_EDICT_BITS + 1)
+// Handle layout since the 2025 SDK update (public/const.h): serial lives in the top 16 bits
+#define NUM_ENT_ENTRY_BITS		(MAX_EDICT_BITS + 2)
 #define NUM_ENT_ENTRIES			(1 << NUM_ENT_ENTRY_BITS)
-#define ENT_ENTRY_MASK			(NUM_ENT_ENTRIES - 1)
+#define NUM_SERIAL_NUM_BITS		16
+#define NUM_SERIAL_NUM_SHIFT_BITS	(32 - NUM_SERIAL_NUM_BITS)
+#define ENT_ENTRY_MASK			((1 << NUM_SERIAL_NUM_BITS) - 1)
 #define INVALID_EHANDLE_INDEX	0xFFFFFFFF
 
 enum struct CBasePlayerOffsets
@@ -182,7 +185,7 @@ stock CBaseHandle LookupEntity(CBaseHandle handle)
 	
 	CEntInfo pInfo = view_as<CEntInfo>(g_pEntityList.m_EntPtrArray.Get32(handle.m_Index & ENT_ENTRY_MASK, CEntInfo.Size()));
 	
-	if(pInfo.m_SerialNumber == (handle.m_Index >> NUM_ENT_ENTRY_BITS))
+	if(pInfo.m_SerialNumber == (handle.m_Index >>> NUM_SERIAL_NUM_SHIFT_BITS))
 		return pInfo.m_pEntity;
 	else
 		return view_as<CBaseHandle>(0);
