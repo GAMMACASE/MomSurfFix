@@ -44,7 +44,8 @@ EngineVersion gEngineVersion;
 ConVar gRampBumpCount,
 	gBounce,
 	gRampInitialRetraceLength,
-	gNoclipWorkAround;
+	gNoclipWorkAround,
+	gBevelFix;
 
 float vec3_origin[3] = {0.0, 0.0, 0.0};
 bool gBasePlayerLoadedTooEarly;
@@ -87,6 +88,7 @@ public void OnPluginStart()
 	gRampBumpCount = CreateConVar("momsurffix_ramp_bumpcount", "8", "Helps with fixing surf/ramp bugs", .hasMin = true, .min = 4.0, .hasMax = true, .max = 16.0);
 	gRampInitialRetraceLength = CreateConVar("momsurffix_ramp_initial_retrace_length", "0.2", "Amount of units used in offset for retraces", .hasMin = true, .min = 0.2, .hasMax = true, .max = 5.0);
 	gNoclipWorkAround = CreateConVar("momsurffix_enable_noclip_workaround", "1", "Enables workaround to prevent issue #1, can actually help if momsuffix_enable_asm_optimizations is 0", .hasMin = true, .min = 0.0, .hasMax = true, .max = 1.0);
+	gBevelFix = CreateConVar("momsurffix_bevel_fix", "1", "Stops joints between angled brushes from clipping your speed in the air (the engine reports an invisible axis-aligned bevel plane instead of the wall you hit)", .hasMin = true, .min = 0.0, .hasMax = true, .max = 1.0);
 	gBounce = FindConVar("sv_bounce");
 	ASSERT_MSG(gBounce, "\"sv_bounce\" convar wasn't found!");
 	
@@ -423,6 +425,9 @@ int TryPlayerMove(CGameMovement pThis, Vector pFirstDest, CGameTrace pFirstTrace
 			else
 			{
 				TracePlayerBBox(pThis, vecAbsOrigin, alloced_vector2, MASK_PLAYERSOLID, COLLISION_GROUP_PLAYER_MOVEMENT, pm);
+				
+				if(gBevelFix.BoolValue && pm.fraction < 1.0 && !pm.startsolid && pThis.player.m_hGroundEntity == view_as<Address>(-1))
+					FixBevelPlane(pThis, vecAbsOrigin, alloced_vector2, pm);
 			}
 		}
 		
@@ -662,6 +667,83 @@ stock bool IsValidMovementTrace(CGameMovement pThis, CGameTrace tr)
 	
 	stuck.Free();
 	return true;
+}
+
+#define BEVEL_HULL_SHRINK 0.1
+// The smaller hull meets the real face slightly later than the full hull met the bevel,
+// so it may probe a little past the end of the move. Only its normal is used.
+#define BEVEL_PROBE_EXTRA 4.0
+
+stock bool IsAxialNormal(float n[3])
+{
+	return FloatAbs(n[0]) == 1.0 || FloatAbs(n[1]) == 1.0 || FloatAbs(n[2]) == 1.0;
+}
+
+// At joints between angled brushes the engine's box trace can report one of the brush's
+// axis-aligned bevel planes instead of the face that was actually hit: DIST_EPSILON is applied
+// along each plane normal, so a face hit at a grazing angle loses the "last plane entered"
+// tie-break to a bevel passing through the same corner. Clipping against that bevel kills the
+// velocity along its axis. A hull a hair smaller sits far enough from every plane to break the
+// tie, so retrace with it and use its normal if it hits a real (non axis-aligned) face at the
+// same spot. Real axis-aligned walls give the same axis-aligned normal and are left alone.
+// Example: https://github.com/GAMMACASE/MomSurfFix/pull/24#issuecomment-6545700989
+void FixBevelPlane(CGameMovement pThis, Vector start, Vector end, CGameTrace pm)
+{
+	float n[3];
+	pm.plane.normal.ToArray(n);
+	if(!IsAxialNormal(n))
+		return;
+	
+	static Ray_t ray;
+	static Vector hullvec;
+	
+	if(ray.Address == Address_Null)
+		ray = Ray_t();
+	
+	if(hullvec.Address == Address_Null)
+		hullvec = Vector();
+	
+	float mins[3], maxs[3], s[3], e[3];
+	if(gEngineVersion == Engine_CSGO)
+	{
+		GetPlayerMins(pThis).ToArray(mins);
+		GetPlayerMaxs(pThis).ToArray(maxs);
+	}
+	else
+	{
+		GetPlayerMinsCSS(pThis, hullvec).ToArray(mins);
+		GetPlayerMaxsCSS(pThis, hullvec).ToArray(maxs);
+	}
+	
+	for(int i = 0; i < 3; i++)
+	{
+		mins[i] += BEVEL_HULL_SHRINK;
+		maxs[i] -= BEVEL_HULL_SHRINK;
+	}
+	
+	start.ToArray(s);
+	end.ToArray(e);
+	
+	float dir[3], len = GetVectorDistance(s, e), hitdist = pm.fraction * len;
+	if(len < FLT_EPSILON)
+		return;
+	
+	SubtractVectors(e, s, dir);
+	ScaleVector(dir, 1.0 / len);
+	VectorMA(s, len + BEVEL_PROBE_EXTRA, dir, e);
+	ray.Init(s, e, mins, maxs);
+	
+	CGameTrace tr = CGameTrace();
+	UTIL_TraceRay(ray, MASK_PLAYERSOLID, pThis, COLLISION_GROUP_PLAYER_MOVEMENT, tr);
+	
+	tr.plane.normal.ToArray(n);
+	float trdist = tr.fraction * (len + BEVEL_PROBE_EXTRA);
+	if(tr.fraction < 1.0 && !tr.startsolid && trdist >= hitdist && trdist - hitdist <= BEVEL_PROBE_EXTRA && !IsAxialNormal(n))
+	{
+		pm.plane.normal.FromArray(n);
+	}
+	
+	tr.Free();
 }
 
 stock void UTIL_TraceRay(Ray_t ray, int mask, CGameMovement gm, int collisionGroup, CGameTrace trace)

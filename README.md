@@ -13,6 +13,7 @@ That fix modifies ``CGameMovement::TryPlayerMove()`` function to behave like mom
 * **momsurffix_ramp_bumpcount** - Left from original momentum mods function, helps with fixing surf/ramp bugs;
 * **momsurffix_ramp_initial_retrace_length** - Left from original momentum mods function, amount of units used in offset for retraces;
 * **momsurffix_enable_noclip_workaround** - Enables workaround to prevent issue #1.
+* **momsurffix_bevel_fix** - Stops joints between angled brushes (round walls, angled wall pieces) from clipping your speed in the air. The engine can report an invisible axis-aligned bevel plane instead of the wall you hit; this retraces with a slightly smaller hull to get the real wall. Default 1.
 
 ## Special thanks to
 * [Momentum mod team for the actual fix](https://momentum-mod.org/);
