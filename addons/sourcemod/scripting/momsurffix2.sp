@@ -491,7 +491,7 @@ int TryPlayerMove(CGameMovement pThis, Vector pFirstDest, CGameTrace pFirstTrace
 		pm.plane.normal.ToArray(planes[numplanes]);
 		numplanes++;
 		
-		if(numplanes == 1 && pThis.player.m_MoveType == MOVETYPE_WALK && pThis.player.m_hGroundEntity != view_as<Address>(-1))
+		if(numplanes == 1 && pThis.player.m_MoveType == MOVETYPE_WALK && pThis.player.m_hGroundEntity == view_as<Address>(-1))
 		{
 			Vector vec1 = Vector();
 			PROF_START();
