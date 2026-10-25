@@ -12,7 +12,7 @@ public Plugin myinfo = {
     name = "Momentum surf fix \'2",
     author = "GAMMA CASE",
     description = "Ported surf fix from momentum mod.",
-    version = "1.1.5",
+    version = "1.1.6",
     url = "http://steamcommunity.com/id/_GAMMACASE_/"
 };
 
@@ -45,7 +45,8 @@ ConVar gRampBumpCount,
 	gBounce,
 	gRampInitialRetraceLength,
 	gNoclipWorkAround,
-	gBevelFix;
+	gBevelFix,
+	gDispFix;
 
 float vec3_origin[3] = {0.0, 0.0, 0.0};
 bool gBasePlayerLoadedTooEarly;
@@ -89,6 +90,7 @@ public void OnPluginStart()
 	gRampInitialRetraceLength = CreateConVar("momsurffix_ramp_initial_retrace_length", "0.2", "Amount of units used in offset for retraces", .hasMin = true, .min = 0.2, .hasMax = true, .max = 5.0);
 	gNoclipWorkAround = CreateConVar("momsurffix_enable_noclip_workaround", "1", "Enables workaround to prevent issue #1, can actually help if momsuffix_enable_asm_optimizations is 0", .hasMin = true, .min = 0.0, .hasMax = true, .max = 1.0);
 	gBevelFix = CreateConVar("momsurffix_bevel_fix", "1", "Stops joints between angled brushes from clipping your speed in the air (the engine reports an invisible axis-aligned bevel plane instead of the wall you hit)", .hasMin = true, .min = 0.0, .hasMax = true, .max = 1.0);
+	gDispFix = CreateConVar("momsurffix_disp_fix", "1", "Stops triangle joints on displacements from randomly stopping you (the engine reports the joint's invisible edge plane instead of the triangle you slid onto)", .hasMin = true, .min = 0.0, .hasMax = true, .max = 1.0);
 	gBounce = FindConVar("sv_bounce");
 	ASSERT_MSG(gBounce, "\"sv_bounce\" convar wasn't found!");
 	
@@ -411,6 +413,10 @@ int TryPlayerMove(CGameMovement pThis, Vector pFirstDest, CGameTrace pFirstTrace
 		{
 			pm.Free();
 			pm = pFirstTrace;
+			
+			// First trace of a ground move, done by WalkMove
+			if(gDispFix.BoolValue && pm.fraction < 1.0 && !pm.startsolid && pm.dispFlags != 0)
+				FixDispSeamPlane(pThis, vecAbsOrigin, pFirstDest, pm);
 		}
 		else
 		{
@@ -426,8 +432,16 @@ int TryPlayerMove(CGameMovement pThis, Vector pFirstDest, CGameTrace pFirstTrace
 			{
 				TracePlayerBBox(pThis, vecAbsOrigin, alloced_vector2, MASK_PLAYERSOLID, COLLISION_GROUP_PLAYER_MOVEMENT, pm);
 				
-				if(gBevelFix.BoolValue && pm.fraction < 1.0 && !pm.startsolid && pThis.player.m_hGroundEntity == view_as<Address>(-1))
-					FixBevelPlane(pThis, vecAbsOrigin, alloced_vector2, pm);
+				if(pm.fraction < 1.0 && !pm.startsolid)
+				{
+					if(pm.dispFlags != 0)
+					{
+						if(gDispFix.BoolValue)
+							FixDispSeamPlane(pThis, vecAbsOrigin, alloced_vector2, pm);
+					}
+					else if(gBevelFix.BoolValue && pThis.player.m_hGroundEntity == view_as<Address>(-1))
+						FixBevelPlane(pThis, vecAbsOrigin, alloced_vector2, pm);
+				}
 			}
 		}
 		
@@ -741,6 +755,105 @@ void FixBevelPlane(CGameMovement pThis, Vector start, Vector end, CGameTrace pm)
 	if(tr.fraction < 1.0 && !tr.startsolid && trdist >= hitdist && trdist - hitdist <= BEVEL_PROBE_EXTRA && !IsAxialNormal(n))
 	{
 		pm.plane.normal.FromArray(n);
+	}
+	
+	tr.Free();
+}
+
+#define DISP_HULL_SHRINK 0.05
+// How far past the end of the move the smaller hull may look for the face. It meets the face
+// later than the full hull did, more so the more the move grazes the surface.
+#define DISP_PROBE_EXTRA 32.0
+// The face it finds must touch the full hull where the original trace stopped (that is ~0.03 away).
+#define DISP_CONTACT_TOLERANCE 0.1
+
+// Only the separating planes the displacement code adds for triangle edges and hull axes have an
+// exactly zero component, a sloped triangle's own face practically never does.
+stock bool IsDispSeamNormal(float n[3])
+{
+	return n[0] == 0.0 || n[1] == 0.0 || n[2] == 0.0;
+}
+
+// Displacements are not traced like brushes: the hull is swept against each triangle using 13
+// separating planes (the triangle's face, the hull's three axis planes and nine "triangle edge x axis"
+// planes) and the plane entered last is reported. Sliding over a joint onto a neighbouring triangle
+// that is nearly flush with the one you are on, the hull is already within DISPCOLL_DIST_EPSILON of
+// the new face, so the face and the joint's edge/axis plane are entered at practically the same moment
+// and float noise picks the winner. When the joint plane wins it stands across the joint, facing back
+// the way you came, so clipping against it removes your speed along the surface. The more
+// triangles meet at a point the more of these planes there are to lose to, and grids whose rows
+// run straight across your path (common on walls) line them up exactly against you.
+// A hull a hair smaller sits far enough from every plane to break the tie, so retrace with it and
+// use the face it finds if that face really touches the full-size hull where the trace stopped.
+// Real edges you hit are still hit by the smaller hull and are left alone.
+// Example: https://github.com/GAMMACASE/MomSurfFix/pull/24#issuecomment-6545700989
+void FixDispSeamPlane(CGameMovement pThis, Vector start, Vector end, CGameTrace pm)
+{
+	float n[3];
+	pm.plane.normal.ToArray(n);
+	if(!IsDispSeamNormal(n))
+		return;
+	
+	static Ray_t ray;
+	static Vector hullvec;
+	
+	if(ray.Address == Address_Null)
+		ray = Ray_t();
+	
+	if(hullvec.Address == Address_Null)
+		hullvec = Vector();
+	
+	float mins[3], maxs[3], smins[3], smaxs[3], s[3], e[3];
+	if(gEngineVersion == Engine_CSGO)
+	{
+		GetPlayerMins(pThis).ToArray(mins);
+		GetPlayerMaxs(pThis).ToArray(maxs);
+	}
+	else
+	{
+		GetPlayerMinsCSS(pThis, hullvec).ToArray(mins);
+		GetPlayerMaxsCSS(pThis, hullvec).ToArray(maxs);
+	}
+	
+	for(int i = 0; i < 3; i++)
+	{
+		smins[i] = mins[i] + DISP_HULL_SHRINK;
+		smaxs[i] = maxs[i] - DISP_HULL_SHRINK;
+	}
+	
+	start.ToArray(s);
+	end.ToArray(e);
+	
+	float dir[3], len = GetVectorDistance(s, e);
+	if(len < FLT_EPSILON)
+		return;
+	
+	SubtractVectors(e, s, dir);
+	ScaleVector(dir, 1.0 / len);
+	VectorMA(s, len + DISP_PROBE_EXTRA, dir, e);
+	ray.Init(s, e, smins, smaxs);
+	
+	CGameTrace tr = CGameTrace();
+	UTIL_TraceRay(ray, MASK_PLAYERSOLID, pThis, COLLISION_GROUP_PLAYER_MOVEMENT, tr);
+	
+	if(tr.fraction < 1.0 && !tr.startsolid && tr.dispFlags != 0)
+	{
+		tr.plane.normal.ToArray(n);
+		if(!IsDispSeamNormal(n))
+		{
+			// Distance from the face's plane to the nearest point of the full hull at pm.endpos
+			float c[3], dist;
+			pm.endpos.ToArray(c);
+			dist = -tr.plane.dist;
+			for(int i = 0; i < 3; i++)
+			{
+				c[i] += (mins[i] + maxs[i]) * 0.5;
+				dist += n[i] * c[i] - FloatAbs(n[i]) * (maxs[i] - mins[i]) * 0.5;
+			}
+			
+			if(FloatAbs(dist) <= DISP_CONTACT_TOLERANCE)
+				pm.plane.normal.FromArray(n);
+		}
 	}
 	
 	tr.Free();
